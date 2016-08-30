@@ -40,10 +40,15 @@ for d = 1:numel(DateStings)
         [QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateStrings{d}, ExpTypes(d), 0);
     end
 
-    %============ Analyse data from all channels
-    RawLFPfiles = wildcardsearch(fullfile(NeuralDataDir, DateStrings{d}), '*.mat');
-    PlotERPs(RawLFPfiles, Timing, Cond);
-    PlotSpect(RawLFPfiles, Timing, Cond);
-
+    %============ Get all channels for this date
+    
+    
+    
+    %============ Analyse data
+    for Ch = 1:numel()
+        Rawwildcardsearch(fullfile(NeuralDataDir, DateStrings{d}), sprintf('*ch%d.mat',Ch));
+        PlotERPs(SubjectID, DateStrings{d}, ExpTypes(d), Ch);
+        PlotSpect(SubjectID, DateStrings{d}, ExpTypes(d), Ch);
+    end
 end
 

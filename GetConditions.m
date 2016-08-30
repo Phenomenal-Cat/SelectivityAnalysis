@@ -1,6 +1,6 @@
 function Params = GetConditions(ExpType)
 
-%=========================== GetStereoFaceConditions.m ====================
+%=========================== GetConditions.m ==============================
 % Reconstruct which stimulus numbers correspond to which conditions for
 % each of the different experiment types ('ExpType') in the apm_StereoFaces
 % pilot experiments.
