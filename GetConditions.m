@@ -19,17 +19,21 @@ else
 end
 
 if ExpType < 4
-    Params.MonkeyIDs   = 1;
+    Params.MonkeyIDs    = 1;
+    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','Expressions'};     % All factors tested
+    Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
 elseif ExpType >= 4
     Params.MonkeyIDs 	= [1,2,3,4,5];
+    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','MonkeyID'};        % All factors tested
+    Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
 end
 
 Params.Elevations  = [-30, 0, 30];
 Params.Distances   = [-20, 0, 20];
 if ExpType == 1
-    Params.Expressions = {'neutral'};
-    Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
-    Params.Scales      = [10, 12, 20];
+    Params.Expressions  = {'neutral'};
+    Params.Azimuths     = [-90, -60, -30, 0, 30, 60, 90];
+    Params.Scales       = [10, 12, 20];
 elseif ExpType == 2
     Params.Expressions = {'fear'};
     Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
