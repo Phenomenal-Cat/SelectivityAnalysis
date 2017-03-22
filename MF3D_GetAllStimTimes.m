@@ -3,9 +3,9 @@
 % This is a wrapper script that allows the user to select which subjects 
 % and session dates to get stimulus times for using GetStimulusTimes.m
 
-% ExpName = 'StereoFaces';
-ExpName = 'FingerPrint';
-ExpType = 1;
+ExpName = 'StereoFaces';
+% ExpName = 'FingerPrint';
+ExpType = 4;
 
 [~,CompName] = system('hostname');  
 if strcmpi(CompName(1:end-1), 'Aidans-MacBook-Pro.local')

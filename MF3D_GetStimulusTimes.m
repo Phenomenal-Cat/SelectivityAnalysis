@@ -19,8 +19,8 @@ function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpT
 
 if nargin == 0
     ExpName     = 'FingerPrint';
-    SubjectID   = 'Spice';
-    DateString  = '20160620';
+    SubjectID   = 'Matcha';
+    DateString  = '20160613';
     ExpType     = 1;
     Verbose     = 1;
 end
@@ -164,7 +164,8 @@ if Verbose == 1
     plot(1:max(Stim.AllStimuli), Stim.Repetitions, '.b');
     xlabel('Stimulus number');
     ylabel('Number of repetitions');
-    
+    Ylims = get(gca,'ylim');
+    set(gca,'ylim',[0, Ylims(2)]);
     
     axh(2) = subplot(3,2,2);
     hist(PD.Durations);

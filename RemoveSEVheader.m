@@ -1,10 +1,14 @@
+
 %========================= RemoveSEVheader.m ==============================
+% This function loads neural data from .sev files and removes header
+% information before saving again as in .sev format, ready for spike
+% sorting via WaveClus.
+%==========================================================================
 
+SubjectID       = 'Matcha';
+ExpName         = 'StereoFaces';
 
-SubjectID   = 'Matcha';
-ExpName     = 'StereoFaces';
-
-DataDir         = fullfile('/Volumes/data/Rawdata/',SubjectID);
+DataDir         = fullfile('/spin1/users/murphyap/Rawdata/',SubjectID);
 SessionDates    = dir(DataDir);
 SessionDates    = {SessionDates(find(cellfun(@isempty, strfind({SessionDates.name}, '.')))).name};
 

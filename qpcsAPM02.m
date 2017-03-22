@@ -890,6 +890,7 @@ end
                 @R_setFixColor;...
                 @R_nextTrial;...
                 @R_getBlock;...
+                @R_getNextStim;...
                 @R_getFixPosX;...
                 @R_getFixPosY;...
                 @R_fixOn;...
@@ -907,7 +908,7 @@ end
         persistent Pic;
         persistent Fix;
 
-        Screen('BlendFunction', Display.win, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        Screen('BlendFunction', Display.win, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         %====================== SET STIMULUS DEFAULT PARAMETERS ==============
         Fix.Type    = 1;                                                    % 0 = dot; 1 = cross; 2 = square; 3 = crosshairs
@@ -975,6 +976,7 @@ end
                     Pic.ConditionMatrix = [Pic.ConditionMatrix, ones(size(Pic.ConditionMatrix,1),1); Pic.ConditionMatrix, zeros(size(Pic.ConditionMatrix,1),1); Pic.ConditionMatrix, -1*ones(size(Pic.ConditionMatrix,1),1)];
                 end
             end
+            Pic.Order = GenerateDesign(size(Pic.ConditionMatrix,1), 100);
            
             params = varargin{1,1};
             if ~isfield(Pic, 'ImageIndx') || (params(1) ~= Pic.ImageIndx(1) || params(2) ~= Pic.ImageIndx(end))
@@ -1048,6 +1050,17 @@ end
             [VBL FixOff] = Screen('Flip', Display.win, [],[],Display.DontSync,Display.MultiFlip); 
         end
 
+        %========================== CLEAR FIXATION ========================
+        function R_getNextStim(varargin)
+            params      = varargin{1,1};
+            TrialNumber = params(1)+1;
+            if TrialNumber > numel(Pic.Order)
+                TrialNumber = TrialNumber-numel(Pic.Order);
+            end
+            reply = sprintf('%d\n',Pic.Order(TrialNumber));
+            
+        end
+            
         %=========================== DRAW TEXTURE =========================
         function R_picOn(varargin)
             params = varargin{1,1};
@@ -1085,7 +1098,6 @@ end
         function R_getBlock(n)
             Trial_num = 0;
             Block = 0;
-            disp(Event);
         end
 
         %========================= LOAD IMAGE VARIABLES ===================
@@ -1190,7 +1202,8 @@ end
         function R_preloadPics(varargin)
 %             params          = varargin{1,1};
 %             Pic.ImageIndx   = params(1):params(2);
-            ImageDir            = 'P:\murphya\PositionInDepth\2D_images';
+%             ImageDir            = 'P:\murphya\PositionInDepth\2D_images';
+            ImageDir            = 'P:\murphya\Stimuli\Processed';
          	ImageFormat         = '.png';
             ImageCategoryDirs   = dir(ImageDir);
             ImageCategoryDirs   = {ImageCategoryDirs([ImageCategoryDirs.isdir]).name};
