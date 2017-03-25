@@ -5,8 +5,8 @@
 
 Subject = 'Matcha';
 Date    = '20160613';
-Cell    = 62;
-Twin    = [120, 250];                                               % Specify time window to calculate mean response from (ms)
+Cell    = 7;
+Twin    = [100, 250];                                               % Specify time window to calculate mean response from (ms)
 BaseWin = [-50 50];                                                 % Specify time window to calculate baseline response from (ms)
 BestCells = [7, 87, 64, 94, 10, 48, 36, 50, 42, 5, 100, 62, 30, 18, 51, 117, 58, 32, 66, 40];
 
@@ -69,7 +69,6 @@ for el = 1:numel(Params.Elevations)
 
         OrientRawMean(az, el)   = mean(mean(OrientationSDF{az,el}(:,Tindx)));
         OrientBaseMean(az, el)  = mean(mean(OrientationSDF{az,el}(:,BaseIndx)));
-%         OrientRawSEM(az, el)    = std(std(OrientationSDF{az,el}(:,Tindx)))/sqrt(size(OrientationSDF{az,el},1));
         OrientDiffMat(az, el)   = OrientRawMean(az, el)-OrientBaseMean(az, el);
 
         axes(Axh(AxIndx));
@@ -174,18 +173,16 @@ set(gca,'xtick',linspace(PixelOffset(2), HeadImSize(2)-PixelOffset(2), size(Orie
 xlabel('Azimuth (°)', 'fontsize', 18);
 ylabel('Elevation (°)',  'fontsize', 18);
 cbh = colorbar;
-set(cbh.Label, 'String', '\Delta Firing rate (Hz)', 'FontSize', 16);
+set(cbh.Label, 'String', 'Firing rate (Hz)', 'FontSize', 16);
 
 %============== Plot orientation tuning curves for azimuth angle
 MainAxPos   = get(gca,'position');
 AxH(4)      = subplot(3,2,[5,6]);%axes('position', [MainAxPos(1), MainAxPos(2)-0.05, MainAxPos(3), 0.25]);
-Colors    	= jet(size(OrientationSDF,2)+1);
 for el = 1:size(OrientDiffMat,2)
-%     [ha, hb, hc] = shadedplot(1:size(OrientDiffMat,1), [OrientDiffMat(:,el)-OrientRawSEM(:, el)]', [OrientDiffMat(:,el)+OrientRawSEM(:, el)]', [0.75, 0.75, 0.75]);
-%     delete([hb, hc]);
-%     hold on
+    [ha, hb, hc] = shadedplot(HistBins, BinMeans{cell, s}-BinSEM{cell, s}, BinMeans{cell, s}+BinSEM{cell, s}, PlotColors(2,:));
+    delete([hb, hc]);
+    hold on
     plot(OrientDiffMat(:,el),'linewidth',2);
-    hold on;
 end
 plot(mean(OrientDiffMat'),'--k','linewidth',3);
 grid on
@@ -199,7 +196,7 @@ ylabel('Firing rate (Hz)',  'fontsize', 18);
 suptitle(sprintf('Head orientation summary - %s %s cell %d', Subject, Date, Cell));
 
 %============== Save figure
-saveas(mfh, fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/EPS/',sprintf('OrientationTuning_%s_%s_cell%03d.eps',Subject, Date, Cell)),'epsc');
+saveas(mfh, fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/EPS/',sprintf('OrientationTuning_%s_%s_cell%d.eps',Subject, Date, Cell)),'epsc');
 %     export_fig(fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNG/',sprintf('OrientationMatrix_%s_%s_cell%d.png',Subject, Date, Cell)), '-png');
 
 
