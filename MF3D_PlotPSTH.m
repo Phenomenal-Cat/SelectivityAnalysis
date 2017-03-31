@@ -17,26 +17,40 @@
 
 %============= LOAD DATA
 % if nargin == 0
-    Subject = 'Matcha';
-    Date    = '20160613';
+    Subject = 'Spice';
+    Date    = '20160620';
     Append  = [];
     if ismac, Append = '/Volumes'; end
     addpath(genpath('/projects/murphya/APMSubfunctions'))
     %SpikeFiles 	= fullfile(Append, '/NIF/procdata/murphya/Physio/Matcha/20160613/20160613_sorted.mat');
-    ProcDataDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/', Subject);
-    SpikeFiles 	= fullfile(Append, '/procdata/murphya/Physio/WaveClusSorted/Matcha/20160613_sorted.mat');
-    TimingFile  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/StimTimes_Matcha_20160613.mat');
+    ProcDataDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/', Subject, Date);
+    SpikeFiles 	= fullfile(Append, '/procdata/murphya/Physio/WaveClusSorted/', Subject, sprintf('%s_sorted.mat', Date));
+    TimingFile  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/', sprintf('StimTimes_%s_%s.mat', Subject, Date));
     SaveFigDir  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs',Subject,Date);
 % end
-
+if ~exist(ProcDataDir, 'dir')
+    mkdir(ProcDataDir);
+end
 load(SpikeFiles)
 load(TimingFile)
 
 ExpNameString = 'StereoFaces';
-if isempty(strfind(NeuroStruct.block, ExpNameString))
+if isempty(strfind(NeuroStruct(1).block, ExpNameString))
     error('The data file was not labelled as a ''%s'' experiment block!', ExpNameString);
 end
 
+%============ Concatenate multi-block sessions
+if numel(NeuroStruct) > 1
+    fprintf('Concatenating NeuroStruct blocks:%s\n', NeuroStruct.block);
+    AllNeuroStruct = NeuroStruct(1);
+    for n = 2:numel(NeuroStruct)
+        for c = 1:size(NeuroStruct(n).cells, 1)
+            AllNeuroStruct.cells{c, 3} = [AllNeuroStruct.cells{c, 3}, NeuroStruct(n).cells{c , 3}+AllNeuroStruct.blocklength];
+        end
+        AllNeuroStruct.blocklength = AllNeuroStruct.blocklength + NeuroStruct(n).blocklength;
+    end
+    NeuroStruct = AllNeuroStruct;
+end
 
 %============ Plot session summary
 figure('units','normalized','position', [0,0,1,0.5]);
@@ -75,7 +89,7 @@ HistBins    = linspace(StimWindow(1), StimWindow(2), diff(StimWindow)/BinWidth);
 
 %============= Loop through all cells
 wbh = waitbar(0,'');
-for cell = CellOrder%1:size(NeuroStruct.cells,1)
+for cell = 1:size(NeuroStruct.cells,1)
     waitbar(cell/size(NeuroStruct.cells,1), wbh, sprintf('Arranging spikes for cell %d of %d...', cell, size(NeuroStruct.cells,1)));
     Fig.Current     = 0;
     

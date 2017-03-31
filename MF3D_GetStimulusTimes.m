@@ -18,9 +18,9 @@ function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpT
 %==========================================================================
 
 if nargin == 0
-    ExpName     = 'FingerPrint';
+    ExpName     = 'StereoFaces';
     SubjectID   = 'Matcha';
-    DateString  = '20160613';
+    DateString  = '20160615';
     ExpType     = 1;
     Verbose     = 1;
 end
@@ -50,7 +50,7 @@ QNX.codes.Finish        = 1999;     %% the ending time of block;
 DGZFiles = wildcardsearch(QNX.dir, sprintf('%s_%s_%s*.dgz', SubjectID, DateString, ExpName));
 for i = 1:numel(DGZFiles)                                                       % For each .dgz file...
     fprintf('Loading DGZ %s...\n', DGZFiles{i});
-    [ExpParam(i), DGZ(i)] = LoadDGZdata(DGZFiles{i});
+    [ExpParam(i), DGZ(i)] = MF3D_LoadDGZdata(DGZFiles{i});
 end
 AllBlocks       = {ExpParam.Experiment};
 NoName          = find(cellfun(@isempty,  AllBlocks));
@@ -150,7 +150,7 @@ end
 BlockStartIndx          = find(QNXcodes == QNX.codes.Begin);
 BlockStartTimes         = QNXtimes(BlockStartIndx);
 if strcmp(ExpName, 'StereoFaces')
-    Params             	= GetConditions(ExpType);
+    Params             	= MF3D_GetConditions(ExpType);
 else
     Params = [];
 end
@@ -176,3 +176,23 @@ if Verbose == 1
     suptitle(sprintf('%s %s %s', SubjectID, DateString, 'StereoFaces'));
     
 end
+
+
+function [ExpParam, DGZ] = LoadDGZdata(DGZfile)
+
+DGZ                 = dg_read(DGZfile);                                 % Load the .dgz file            
+par_num             = size(DGZ.e_pre,1);                              	% Count how many params
+ExpParam.Experiment = DGZ.e_pre{1}{2};                                  % Get experiment name
+ExpParam.Subject    = DGZ.e_pre{2}{2};                                	% Get subject name
+ExpParam.ADCperDeg  = DGZ.e_params{1}{2};                             	% Get ADC/deg scale
+for j = 3:2:(floor(par_num/2)*2)                                       	% For each parameter...
+    DGZ.e_pre{j}{2}(ismember(DGZ.e_pre{j}{2}, ' ()!?*-:')) = '_';    	% Remove punctuation from parameter names
+    if ~isempty(DGZ.e_pre{j}{2})                                       	% If parameter name cell is not empty...
+        eval(sprintf('ExpParam.%s = %d;', DGZ.e_pre{j}{2}, str2double(DGZ.e_pre{j+1}{2})));
+    else
+        return                                                              
+    end
+end
+%             tmp1 = getEVTParams(DGZ,26,1,0);           	% Use dg utils to get values
+%             tmp2 = getEVTParams(DGZ,26,2,0);
+%             Alt_ADCdegHV{d} = [tmp1, tmp2];

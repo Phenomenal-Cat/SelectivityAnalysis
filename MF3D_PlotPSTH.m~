@@ -18,25 +18,39 @@
 %============= LOAD DATA
 % if nargin == 0
     Subject = 'Matcha';
-    Date    = '20160613';
+    Date    = '20160614';
     Append  = [];
     if ismac, Append = '/Volumes'; end
     addpath(genpath('/projects/murphya/APMSubfunctions'))
     %SpikeFiles 	= fullfile(Append, '/NIF/procdata/murphya/Physio/Matcha/20160613/20160613_sorted.mat');
-    ProcDataDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/', Subject);
-    SpikeFiles 	= fullfile(Append, '/procdata/murphya/Physio/WaveClusSorted/Matcha/20160613_sorted.mat');
-    TimingFile  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/StimTimes_Matcha_20160613.mat');
+    ProcDataDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/', Subject, Date);
+    SpikeFiles 	= fullfile(Append, '/procdata/murphya/Physio/WaveClusSorted/', Subject, sprintf('%s_sorted.mat', Date));
+    TimingFile  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/', sprintf('StimTimes_%s_%s.mat', Subject, Date));
     SaveFigDir  = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs',Subject,Date);
 % end
-
+if ~exist(ProcDataDir, 'dir')
+    mkdir(ProcDataDir);
+end
 load(SpikeFiles)
 load(TimingFile)
 
 ExpNameString = 'StereoFaces';
-if isempty(strfind(NeuroStruct.block, ExpNameString))
+if isempty(strfind(NeuroStruct(1).block, ExpNameString))
     error('The data file was not labelled as a ''%s'' experiment block!', ExpNameString);
 end
 
+%============ Concatenate multi-block sessions
+if numel(NeuroStruct) > 1
+    fprintf('Concatenating NeuroStruct blocks:%s\n', NeuroStruct.block);
+    AllNeuroStruct = NeuroStruct(1);
+    for n = 2:numel(NeuroStruct)
+        for c = 1:size(NeuroStruct(n).cells, 1)
+            AllNeuroStruct.cells{c, 3} = [AllNeuroStruct.cells{c, 3}, NeuroStruct(n).cells{c , 3}+AllNeuroStruct.blocklength];
+        end
+        AllNeuroStruct.blocklength = AllNeuroStruct.blocklength + NeuroStruct(n).blocklength;
+    end
+    NeuroStruct = AllNeuroStruct;
+    endclc
 
 %============ Plot session summary
 figure('units','normalized','position', [0,0,1,0.5]);
@@ -54,7 +68,7 @@ xlabel('Cell number','fontsize', 18);
 ylabel('Mean firing rate (Hz)','fontsize', 18);
 title(sprintf('Summary for %s %s %s', Subject, Date, ExpNameString), 'fontsize', 20);
 saveas(gcf, fullfile(ProcDataDir, sprintf('Summary_%s_%s_%s.fig', Subject, Date, ExpNameString)));
-[~,CellOrder] = sort(SpikesPerSecond);
+[~,CellOrder] = sort(SpikesPerSecond,'descend');
 
 %============= 
 SaveFigs        = 1;
@@ -69,13 +83,13 @@ Xticks      = [-100:100:400];
 Ylims       = [0, 100];
 StimOn      = [0, 300];
 StimWindow  = [-100, 400];                         % Response window (milliseconds)
-BinWidth    = 50;                                 % Histogram bin width (miliseconds)
+BinWidth    = 10;                                 % Histogram bin width (miliseconds)
 HistBins    = linspace(StimWindow(1), StimWindow(2), diff(StimWindow)/BinWidth);
 
 
 %============= Loop through all cells
 wbh = waitbar(0,'');
-for cell = CellOrder%1:size(NeuroStruct.cells,1)
+for cell = 1:size(NeuroStruct.cells,1)
     waitbar(cell/size(NeuroStruct.cells,1), wbh, sprintf('Arranging spikes for cell %d of %d...', cell, size(NeuroStruct.cells,1)));
     Fig.Current     = 0;
     
@@ -173,7 +187,7 @@ for cell = CellOrder%1:size(NeuroStruct.cells,1)
     Fhf                 = figure('position',get(0,'ScreenSize'),'renderer','painters');                                   
     axh                 = tight_subplot(2, 3, 0.05, 0.05, 0.05);
 
-    for f = 1:numel(Params.Factors)
+    for f = 1:numel(Params.Factors)-1
         Factor{f}  	= eval(sprintf('Params.%s', Params.Factors{f}));
         Colors      = jet(numel(Factor{f}));
         axes(axh(f));
@@ -197,11 +211,11 @@ for cell = CellOrder%1:size(NeuroStruct.cells,1)
         ph4 = patch([0,0,StimOn([2,2])], Ylims([1,2,2,1]), 0, 'facecolor', [0.5 0.5 0.5], 'facealpha', 1, 'edgecolor','none');
         uistack(ph4, 'bottom');
         grid on;
-        drawnow;
         xlabel('Time (s)', 'fontsize', 16);
         ylabel('Firing rate (Hz)', 'fontsize', 16);
         title(sprintf('%s', Factor{f}), 'fontsize', 18);
-        set(gca,'ytick',Ylims(1):20:Ylims(2))
+        set(gca,'ytick',Ylims(1):20:Ylims(2),'tickdir','out')
+    	drawnow;
     end
     suptitle(sprintf('%s %s %s cell %d', Subject, Date, ExpNameString, cell));
     saveas(Fhf, fullfile(ProcDataDir, sprintf('ERPs_%s_%s_%s_cell%d.fig', Subject, Date, ExpNameString, cell)));

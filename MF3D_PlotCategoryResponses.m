@@ -1,15 +1,19 @@
 
 %======================== MF3D_PlotCategoryResponses.m ====================
+% Plot head orientation tuning for STS cells tested in 'StereoFace' pilot
+% experiments.
+%
 
 
-
-Subject = 'Matcha';
-Date    = '20160613';
-Cell    = 62;
-Twin    = [120, 250];                                               % Specify time window to calculate mean response from (ms)
+Subject = 'Spice';
+Date    = '20160620';
+Cell    = 167;
+Twin    = [100, 200];                                               % Specify time window to calculate mean response from (ms)
 BaseWin = [-50 50];                                                 % Specify time window to calculate baseline response from (ms)
-BestCells = [7, 87, 64, 94, 10, 48, 36, 50, 42, 5, 100, 62, 30, 18, 51, 117, 58, 32, 66, 40];
-
+% BestCells = [7, 87, 64, 94, 10, 48, 36, 50, 42, 5, 100, 62, 30, 18, 51, 117, 58, 32, 66, 40];
+% 
+% BestCells = [9    84    48    40    91     3    93   123    60     6];
+% Cell        = BestCells(1);
 %============= Set directories
 Append  = [];
 if ismac, Append = '/Volumes'; end
@@ -89,6 +93,11 @@ end
 set(Axh, 'ylim', Ylims);
 suptitle(sprintf('%s %s cell %d', Subject, Date, Cell));
 
+twin = inputdlg({'Time window start (ms)','Time window end (ms)'},'Time window', 1, {sprintf('%0.2f', Twin(1)), sprintf('%0.2f', Twin(2))});
+if isempty(twin)
+    return
+end
+Twin = [str2num(twin{1}), str2num(twin{2})];
 
 
 %% ================ PLOT ORIENTATION SUMMARY FIGURE =======================
@@ -199,7 +208,7 @@ ylabel('Firing rate (Hz)',  'fontsize', 18);
 suptitle(sprintf('Head orientation summary - %s %s cell %d', Subject, Date, Cell));
 
 %============== Save figure
-saveas(mfh, fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/EPS/',sprintf('OrientationTuning_%s_%s_cell%03d.eps',Subject, Date, Cell)),'epsc');
+saveas(mfh, fullfile(Append, '/PROCDATA/murphya/Physio/StereoFaces/HeadOrientationTuning', Subject,sprintf('OrientationTuning_%s_%s_cell%03d.eps',Subject, Date, Cell)),'epsc');
 %     export_fig(fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNG/',sprintf('OrientationMatrix_%s_%s_cell%d.png',Subject, Date, Cell)), '-png');
 
 
