@@ -3,50 +3,46 @@
 % Plot head orientation tuning for STS cells tested in 'StereoFace' pilot
 % experiments.
 %
+%==========================================================================
 
+Subject     = 'Avalanche';
+Date        = '20160627';
+Expression  = 'Neutral';
 
-Subject = 'Spice';
-Date    = '20160620';
-Cell    = 167;
-Twin    = [100, 200];                                               % Specify time window to calculate mean response from (ms)
-BaseWin = [-50 50];                                                 % Specify time window to calculate baseline response from (ms)
-% BestCells = [7, 87, 64, 94, 10, 48, 36, 50, 42, 5, 100, 62, 30, 18, 51, 117, 58, 32, 66, 40];
-% 
-% BestCells = [9    84    48    40    91     3    93   123    60     6];
-% Cell        = BestCells(1);
+switch Subject
+    case 'Avalanche'
+        if strcmp(Date, '20160629')
+            Expression = 'Fear';
+        end
+    case 'Matcha'
+     	if strcmp(Date, '20160615')
+            Expression = 'Fear';
+        end
+    case 'Spice'
+       	if strcmp(Date, '20160622')
+            Expression = 'Fear';
+        end
+end
+
 %============= Set directories
-Append  = [];
-if ismac, Append = '/Volumes'; end
-StimDir                 = fullfile(Append, '/projects/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_1/');
-TimingData              = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
-ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/',Subject,sprintf('%s_%s.mat', Subject, Date));
-HeadOrientationImage    = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNGs/OrientationStimuli.png');
-load(TimingData)
-load(ProcessedSessionData);
+if ~exist('AllSpikes','var')
+    Append  = [];
+    if ismac, Append = '/Volumes'; end
+    StimDir                 = fullfile(Append, '/projects/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_1/');
+    TimingData              = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
+    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
+    HeadOrientationImage    = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNGs/', sprintf('OrientStim_%s.png', Expression));
+    load(TimingData)
+    load(ProcessedSessionData);
+end
 
 
-% %========== Plot stimulus images
-% ImCrop = [650, 200];                                                        % Number of pixels to crop from each edge in X and Y
-% figure('position', [-1911, 168, 1799, 840]);
-% Axh = tight_subplot(3,7,0, 0,0);
-% AxIndx  = 1;
-% Dist    = 1;
-% Scale   = 1;
-% for el = 1:numel(Params.Elevations)
-%     for az = 1:numel(Params.Azimuths)
-%         Cond = find(ismember(Params.ConditionMatrix, [1, az, el, Dist, Scale],'rows'));
-%         axes(Axh(AxIndx));
-%         [Im, cm, Alpha] = imread(fullfile(StimDir, Params.Filenames{Cond}));
-%         Imsize      = size(Im);
-%         Im          = Im(ImCrop(2):(Imsize(1)-ImCrop(2)), ImCrop(1):((Imsize(2)/2)-ImCrop(1)),:);
-%         Alpha       = Alpha(ImCrop(2):(Imsize(1)-ImCrop(2)), ImCrop(1):((Imsize(2)/2)-ImCrop(1)));
-%         imh(Cond)   = image(Im);
-%         alpha(imh(Cond), Alpha);
-%         axis tight equal off
-%         AxIndx = AxIndx+1;
-%     end
-% end
-
+%============= Settings
+Channel     = 76;
+CellIndx   	= 1;
+Cell        = find(ismember(ChIndx(:,[2,3]), [Channel, CellIndx], 'rows'));
+Twin        = [80, 200];                                                    % Specify time window to calculate mean response from (ms)
+BaseWin     = [-50 50];                                                     % Specify time window to calculate baseline response from (ms)
 
 
 %========== Pool neural data across scales and depths
@@ -73,7 +69,7 @@ for el = 1:numel(Params.Elevations)
 
         OrientRawMean(az, el)   = mean(mean(OrientationSDF{az,el}(:,Tindx)));
         OrientBaseMean(az, el)  = mean(mean(OrientationSDF{az,el}(:,BaseIndx)));
-%         OrientRawSEM(az, el)    = std(std(OrientationSDF{az,el}(:,Tindx)))/sqrt(size(OrientationSDF{az,el},1));
+        OrientRawSEM(az, el)    = std(std(OrientationSDF{az,el}(:,Tindx)))/sqrt(size(OrientationSDF{az,el},1));
         OrientDiffMat(az, el)   = OrientRawMean(az, el)-OrientBaseMean(az, el);
 
         axes(Axh(AxIndx));
@@ -91,7 +87,8 @@ for el = 1:numel(Params.Elevations)
     end
 end
 set(Axh, 'ylim', Ylims);
-suptitle(sprintf('%s %s cell %d', Subject, Date, Cell));
+suptitle(sprintf('%s %s channel %d cell %d', Subject, Date, Channel, CellIndx));
+export_fig(fullfile(Append, '/PROCDATA/murphya/Physio/StereoFaces/HeadOrientationTuning', Subject,sprintf('AllOrientations_%s_%s_ch%03d_cell%d.png',Subject, Date, Channel, CellIndx)), '-png');
 
 twin = inputdlg({'Time window start (ms)','Time window end (ms)'},'Time window', 1, {sprintf('%0.2f', Twin(1)), sprintf('%0.2f', Twin(2))});
 if isempty(twin)
@@ -102,7 +99,7 @@ Twin = [str2num(twin{1}), str2num(twin{2})];
 
 %% ================ PLOT ORIENTATION SUMMARY FIGURE =======================
 LegendOn                = 1;
-mfh                     = figure('name',sprintf('%s %s - cell % orientation analysis', Subject, Date, Cell),'position',[1,1,650,1007]);
+mfh                     = figure('name',sprintf('%s %s - cell %d orientation analysis', Subject, Date, Cell),'position',[1,1,650,1007]);
 Axh(1)                  = subplot(3,2,1);
 Colors                  = jet(size(OrientationSDF,1));
 for az = 1:size(OrientationSDF,1)
@@ -123,7 +120,7 @@ if LegendOn == 1
     for az = 1:numel(Params.Azimuths)
         LegendTextAz{az}  = sprintf('%d °',Params.Azimuths(az));
     end
-    legend(phaz, LegendTextAz, 'location', 'northwest', 'fontsize',14);
+    legend(phaz, LegendTextAz, 'location', 'northeast', 'fontsize',14);
 end
 xlabel('Time (ms)', 'fontsize', 18);
 ylabel('Firing rate (Hz)',  'fontsize', 18);
@@ -153,7 +150,7 @@ if LegendOn == 1
     for el = 1:numel(Params.Elevations)
         LegendTextEl{el}  = sprintf('%d °',Params.Elevations(el));
     end
-    legend(phel, LegendTextEl, 'location', 'northwest', 'fontsize',14);
+    legend(phel, LegendTextEl, 'location', 'northeast', 'fontsize',14);
 end
 xlabel('Time (ms)', 'fontsize', 18);
 ylabel('Firing rate (Hz)',  'fontsize', 18);
@@ -193,22 +190,24 @@ for el = 1:size(OrientDiffMat,2)
 %     [ha, hb, hc] = shadedplot(1:size(OrientDiffMat,1), [OrientDiffMat(:,el)-OrientRawSEM(:, el)]', [OrientDiffMat(:,el)+OrientRawSEM(:, el)]', [0.75, 0.75, 0.75]);
 %     delete([hb, hc]);
 %     hold on
-    plot(OrientDiffMat(:,el),'linewidth',2);
+    plh(el) = plot(OrientDiffMat(:,el),'linewidth',2);
     hold on;
+    ebh(el) = errorbar(1:size(OrientDiffMat, 1), OrientDiffMat(:,el), OrientRawSEM(:, el), OrientRawSEM(:, el));
+    set(ebh(el), 'color', get(plh(el), 'color'));
 end
-plot(mean(OrientDiffMat'),'--k','linewidth',3);
+plh(el+1) = plot(mean(OrientDiffMat'),'--k','linewidth',3);
 grid on
 box off
 LegendTextEl{end+1} = 'Mean';
-legend(LegendTextEl, 'fontsize',18);
+legend(plh, LegendTextEl, 'fontsize',18);
 set(gca,'xlim',[0.5, 7.5],'xtick',1:1:7,'xticklabel', Params.Azimuths,'tickdir','out','fontsize',16);
 xlabel('Azimuth (°)', 'fontsize', 16);
 ylabel('Firing rate (Hz)',  'fontsize', 18);
 
-suptitle(sprintf('Head orientation summary - %s %s cell %d', Subject, Date, Cell));
+suptitle(sprintf('Head orientation summary - %s %s channel %d cell %d', Subject, Date, Channel, CellIndx));
 
 %============== Save figure
-saveas(mfh, fullfile(Append, '/PROCDATA/murphya/Physio/StereoFaces/HeadOrientationTuning', Subject,sprintf('OrientationTuning_%s_%s_cell%03d.eps',Subject, Date, Cell)),'epsc');
+saveas(mfh, fullfile(Append, '/PROCDATA/murphya/Physio/StereoFaces/HeadOrientationTuning', Subject,sprintf('OrientationTuning_%s_%s_ch%03d_cell%d.eps',Subject, Date, Channel, CellIndx)),'epsc');
 %     export_fig(fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNG/',sprintf('OrientationMatrix_%s_%s_cell%d.png',Subject, Date, Cell)), '-png');
 
 

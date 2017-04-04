@@ -69,7 +69,7 @@ for exp = 1:numel(Params.Expressions)
         end
     end
 end
-% Include stereoscopic depth profile as a variable? (1) stereo congruent; 0) mono; -1) inconruent:
+% Include stereoscopic depth profile as a variable? (1) stereo congruent; 0) mono; -1) incongruent:
 if ExpType == 3
     Params.ConditionMatrix = [Params.ConditionMatrix, ones(size(Params.ConditionMatrix,1),1); Params.ConditionMatrix, zeros(size(Params.ConditionMatrix,1),1); Params.ConditionMatrix, -1*ones(size(Params.ConditionMatrix,1),1)];
 end

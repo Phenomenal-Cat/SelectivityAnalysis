@@ -20,7 +20,7 @@ function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpT
 if nargin == 0
     ExpName     = 'StereoFaces';
     SubjectID   = 'Matcha';
-    DateString  = '20160615';
+    DateString  = '20160614';
     ExpType     = 1;
     Verbose     = 1;
 end
