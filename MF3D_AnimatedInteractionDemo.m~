@@ -50,15 +50,11 @@ while 1
     %============== Check gaze/ mouse location
     [x,y]           = GetMouse(Display.win);                                  	% Get cursor coordinates (pixels relative to upper left corner)
     EyePos          = [ceil(x),ceil(y)];                                        % Round coordinates to nearest pixel
-    for e = 1:2
-        if any(EyePos(e) < 1)                                                      % Constrain possible gaze positions based on screen resolution
-            EyePos(e) = 1;
-        end
-        if EyePos(e) > Display.Rect(2+e)
-            EyePos(e) = Display.Rect(2+e);
-        end
+    if any(EyePos > [0,0])                                                      % Constrain possible gaze positions based on screen resolution
+        EyePos(EyePos<0) = 1;
+        EyePos(EyePos>Display.Rect([3,4])) = Display.Rect(EyePos>Display.Rect);
     end
-    RegionIndex     = MaskIm(EyePos(2),EyePos(1));                             	% Query which region of the image the cursor is over
+    RegionIndex     = MaskIm(round(y),round(x));                             	% Query which region of the image the cursor is over
     GazeDestRect	= CenterRectOnPoint(GazeRectSize,EyePos(1),EyePos(2));
     if RegionIndex > 0                                                          % If cursor is not over a target...
         DrawMousePos    = 1;
@@ -96,7 +92,7 @@ end
 
 %============== Perform clean up
 Screen('CloseAll');      
-%ShowCursor;
+ShowCursor;
 
 %============== Show some stats about software performance
 Frametimes      = diff(FrameOnset);
