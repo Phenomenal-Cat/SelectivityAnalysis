@@ -24,7 +24,7 @@ if ExpType < 4
     Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
 elseif ExpType >= 4
     Params.MonkeyIDs 	= [1,2,3,4,5];
-    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','MonkeyID'};        % All factors tested
+    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','MonkeyIDs'};     	% All factors tested
     Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
 end
 

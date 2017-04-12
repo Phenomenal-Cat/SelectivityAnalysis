@@ -9,7 +9,7 @@ function MF3D_PlotResponses_Identities(Subject, Date, Channel, CellIndx, Output)
 if nargin == 0
     Subject     = 'Matcha';
     Date        = '20160720';
-    Channel     = 25;
+    Channel     = 17;
     CellIndx   	= 1;
     Output      = 'gif';
 end
@@ -49,9 +49,9 @@ end
 for id = 1:numel(Params.MonkeyIDs)
     HeadExpImage = fullfile('/Volumes/projects/murphya/MacaqueFace3D/PilotData/PNGs/',sprintf('MonkeyID_%d.png',id));
     [HeadIm,cm,HeadAlpha]   = imread(HeadExpImage);                                   % Load head orientation overlay
-    HeadImSize{id}        	= size(HeadIm);
-    HeadImages{id}          = HeadIm;
-    HeadImAlpha{id}         = HeadAlpha;
+    HeadImSize              = size(HeadIm);
+    HeadImages{id}         = HeadIm;
+    HeadImAlpha{id}        = HeadAlpha;
 end
 
 %============= Settings
@@ -64,9 +64,9 @@ Cell                = find(ismember(ChIndx(:,[2,3]), [Channel, CellIndx], 'rows'
 %========== Modified plot
 fh          = figure('position', get(0,'screensize'));              % Open fullscreen figure window
 NoAxY       = numel(Params.Elevations)*2;
-NoAxX       = numel(Params.Azimuths);       
+NoAxX       = numel(Params.Azimuths)*numel(Params.MonkeyIDs);       
 Axh         = tight_subplot(NoAxY, NoAxX,0, 0.05,0.05);           	% Generate axes
-RastAxIndx  = [1:NoAxX,31,32,33,61,62,63];                            % Specify which axes are for raster plots
+RastAxIndx  = [1,2,3,31,32,33,61,62,63];                            % Specify which axes are for raster plots
 SDFAxIndx   = RastAxIndx+NoAxX;                                   	% Specify axes for SDF plots
 Ylims       = [0 100];                                            	% Specify y-axis limits for SDFs (spikes per second)
 Xlims       = [-100, 400];                                          % Specify x-axis limits for all axes (ms)       
@@ -190,18 +190,18 @@ set(lh, 'Ydata', Ylims);
 t = 1;
 MatClims = [min(MinDiffMat(:)), max(MaxDiffMat(:))];
 for id = 1:numel(Params.MonkeyIDs)
- 	AxMat(id)           	= axes('position', [PlotXpos(1+(id-1)*3)-0.08, 0.1, 0.32 0.32]);
-    PixelOffset             = round([HeadImSize{id}(1)/size(OrientDiffMat{id, t},2), HeadImSize{id}(2)/size(OrientDiffMat{id, t},1)]/2);
-    imh(id,1)            	= imagesc([PixelOffset(2), HeadImSize{id}(2)-PixelOffset(2)],[PixelOffset(1), HeadImSize{id}(1)-PixelOffset(1)], OrientDiffMat{id, t}');                                                       
+ 	AxMat(id)           	= axes('position', [PlotXpos(1+(id-1)*3)-0.04, 0.1, 0.32 0.32]);
+    PixelOffset             = round([HeadImSize(1)/size(OrientDiffMat{id, t},2), HeadImSize(2)/size(OrientDiffMat{id, t},1)]/2);
+    imh(id,1)            	= imagesc([PixelOffset(2), HeadImSize(2)-PixelOffset(2)],[PixelOffset(1), HeadImSize(1)-PixelOffset(1)], OrientDiffMat{id, t}');                                                       
     hold on
     imh(id,2)            	= image(HeadImages{id});                                                       % Draw head image overlay
     alpha(imh(id,2), HeadImAlpha{id});                                                                    % Set alpha transparency
     axis equal tight
     colormap hot
     box off
-    set(gca,'xtick',linspace(PixelOffset(2), HeadImSize{id}(2)-PixelOffset(2), size(OrientDiffMat{id, t},1)),...
+    set(gca,'xtick',linspace(PixelOffset(2), HeadImSize(2)-PixelOffset(2), size(OrientDiffMat{id, t},1)),...
             'xticklabel',Params.Azimuths, ...
-            'ytick', linspace(PixelOffset(1), HeadImSize{id}(1)-PixelOffset(1), size(OrientDiffMat{id, t},2)),...
+            'ytick', linspace(PixelOffset(1), HeadImSize(1)-PixelOffset(1), size(OrientDiffMat{id, t},2)),...
             'yticklabel',Params.Elevations,...
             'fontsize',16,...
             'tickdir', 'out');

@@ -18,7 +18,7 @@
 %============= LOAD DATA
 % if nargin == 0
     Subject = 'Matcha';
-    Date    = '20160615';
+    Date    = '20160720';
     Append  = [];
     if ismac, Append = '/Volumes'; end
     addpath(genpath('/projects/murphya/APMSubfunctions'))

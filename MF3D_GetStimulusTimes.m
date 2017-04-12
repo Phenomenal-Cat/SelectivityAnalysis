@@ -20,8 +20,8 @@ function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpT
 if nargin == 0
     ExpName     = 'StereoFaces';
     SubjectID   = 'Matcha';
-    DateString  = '20160614';
-    ExpType     = 1;
+    DateString  = '20160615';
+    ExpType     = 2;
     Verbose     = 1;
 end
 
@@ -32,7 +32,7 @@ if strcmpi(CompName(1:end-1), 'Aidans-MacBook-Pro.local')
     TDTdir      = fullfile('/Volumes/Seagate Backup 1/NeuralData/FacePatchPilot/TDT_converted/', SubjectID, DateString);
     QNX.dir     = fullfile('/Volumes/Seagate Backup 1/NeuralData/FacePatchPilot/QNX/', SubjectID, DateString);
 else
-    OutputFile  = fullfile('/Volumes/procdata/murphya/Physio/', ExpName, sprintf('StimTimes_%s_%s.mat', SubjectID, DateString));
+    OutputFile  = fullfile('/Volumes/procdata/murphya/Physio/', ExpName, 'Timing', ExpName, sprintf('StimTimes_%s_%s.mat', SubjectID, DateString));
     TDTdir      = fullfile('/Volumes/RAWDATA/murphya/Physio/TDT_converted/', SubjectID, DateString);
     QNX.dir     = fullfile('/Volumes/RAWDATA/murphya/Physio/QNX/', SubjectID, DateString);
 end
@@ -104,6 +104,9 @@ for dt = 1:numel(DataTypes)
             else
                 AllQNXtimes = QNXtimes;
             end
+
+         	QNXcodes(QNXcodes>189 & QNXcodes <= 2*189) = QNXcodes(QNXcodes>189 & QNXcodes <= 2*189)-189;    % <<<<<<<<<< TEMPORARY HACK FOR MATCHA FEAR EXPERIMENT
+  
             AllQNXcodes = [AllQNXcodes, QNXcodes];
         end
     end
