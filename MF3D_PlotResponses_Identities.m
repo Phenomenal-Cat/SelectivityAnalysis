@@ -20,7 +20,7 @@ switch Subject
             error('Invalid session for expression analysis!')
         end
     case 'Matcha'
-        if ~any(~cellfun(@isempty, strfind({'20160719','20160720'}, Date)))
+        if ~any(~cellfun(@isempty, strfind({'20160719','20160720','20160721'}, Date)))
             error('Invalid session for expression analysis!')
         end
     case 'Spice'
@@ -40,7 +40,8 @@ if ~exist('AllSpikes','var')
     load(TimingData)
     load(ProcessedSessionData);
 end
-SaveDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/FacialExpressionTuning', Subject);
+Cell 	= find(ismember(ChIndx(:,[2,3]), [Channel, CellIndx], 'rows'));
+SaveDir = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/FacialIdentityTuning', Subject);
 if ~exist(SaveDir, 'dir')
     mkdir(SaveDir);
 end
@@ -54,19 +55,16 @@ for id = 1:numel(Params.MonkeyIDs)
     HeadImAlpha{id}         = HeadAlpha;
 end
 
-%============= Settings
-% Cell        = 5;
-% Channel     = ChIndx(Cell,2);
-% CellIndx    = ChIndx(Cell,3);
-Cell                = find(ismember(ChIndx(:,[2,3]), [Channel, CellIndx], 'rows'));
-        
 
-%========== Modified plot
+%========== Plot settings
 fh          = figure('position', get(0,'screensize'));              % Open fullscreen figure window
 NoAxY       = numel(Params.Elevations)*2;
-NoAxX       = numel(Params.Azimuths);       
+NoAxX       = numel(Params.Azimuths)*numel(Params.MonkeyIDs);       
 Axh         = tight_subplot(NoAxY, NoAxX,0, 0.05,0.05);           	% Generate axes
-RastAxIndx  = [1:NoAxX,31,32,33,61,62,63];                            % Specify which axes are for raster plots
+RastAxIndx  = [];
+for x = 1:3
+    RastAxIndx(end+1:end+3) = (1:3) + (x-1)*(NoAxX*2);            	% Specify which axes are for raster plots
+end
 SDFAxIndx   = RastAxIndx+NoAxX;                                   	% Specify axes for SDF plots
 Ylims       = [0 100];                                            	% Specify y-axis limits for SDFs (spikes per second)
 Xlims       = [-100, 400];                                          % Specify x-axis limits for all axes (ms)       
@@ -153,7 +151,7 @@ for id = 1:numel(Params.MonkeyIDs)
             lh(end+1) = plot([0,0],Ylims, '-k','linewidth',2);
             uistack(ph(end), 'bottom');
             
-            set(gca,'xlim', Xlims, 'ylim', Ylims);
+            set(gca,'xlim', Xlims, 'ylim', Ylims,'xtick', Xlims(1):100:Xlims(2));
             if ismember(SDFAxIndx(AxIndx), [1:NoAxX:(6*NoAxX)])
                 ylabel(sprintf('%d °', Params.Elevations(el)), 'fontsize', 16);
             else

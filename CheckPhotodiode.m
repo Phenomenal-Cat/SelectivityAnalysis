@@ -25,6 +25,7 @@ PD.Signal       = Signal;
 PD.SampleRate   = SampleRate;
 PD.TimeStamps   = linspace(0,numel(PD.Signal)/PD.SampleRate,numel(PD.Signal));
 PD.FilterOn     = 1; 
+PD.Inverted     = 0;
 PD.PlotOn       = 1;
 
 %============== High-pass filter signal
@@ -50,6 +51,9 @@ if numel(PD.OnTimes) ~= numel(PD.OffTimes)
 else
     PD.OnOffMatch   = 1;
     PD.Durations   	= PD.OffTimes-PD.OnTimes;                                   % Get duration of photodiode responses     
+end
+if PD.OnTimes(1) < PD.OffTimes(1)
+    PD.OnOffMatch   = 0;   
 end
         
 
@@ -88,7 +92,7 @@ if PD.PlotOn == 1
     Fig.axh(4) = subplot(3,3,[7,8]);
     Fig.TCthresh(2) = plot(PD.TimeStamps, PD.ThreshSignal,'-b');
     hold on;
-    plot(PD.OnTimes, ones(size(PD.OnTimes)), '*r');
+    Fig.PDonsets = plot(PD.OnTimes, ones(size(PD.OnTimes)), '*r');
 %     plot(BlockStartTimes, ones(size(BlockStartTimes)), '.g', 'markersize',40);
     set(Fig.axh(4), 'xlim', [0, PD.TimeStamps(end)],'ylim',[-0.1,1.1]);
     xlabel('Time (seconds)','fontsize',16);
@@ -111,9 +115,9 @@ if PD.PlotOn == 1
     %==================== Add UI menus
     Fig.UI.PanelPos = [Fig.Pos(3)-300, Fig.Pos(4)-500, 250, 300];
     Fig.UI.PanelH  	= uipanel('Title','Parameters','FontSize', 16,'Units','pixels','Position',Fig.UI.PanelPos);
-    Fig.UI.Labels   = {'High pass filter?','Cutoff (Hz)','Raw thresh (V)','Filt Thresh (V)','Accept?'};
-    Fig.UI.Style    = {'Checkbox','Edit', 'Edit','Edit','PushButton'};
-    Fig.UI.List     = {'on/off', num2str(PD.Filt.Cutoff), num2str(PD.Thresh),num2str(PD.ThreshFilt),'Accept'};
+    Fig.UI.Labels   = {'High pass filter?','Cutoff (Hz)','Raw thresh (V)','Filt Thresh (V)','Accept?','Invert signal?'};
+    Fig.UI.Style    = {'Checkbox','Edit', 'Edit','Edit','PushButton','Checkbox'};
+    Fig.UI.List     = {'on/off', num2str(PD.Filt.Cutoff), num2str(PD.Thresh),num2str(PD.ThreshFilt),'Accept','on/off'};
     Fig.UI.InputDim = [100, 20];
     for i = 1:numel(Fig.UI.Labels)
         Pos = numel(Fig.UI.Labels)-i;
@@ -131,9 +135,11 @@ if PD.PlotOn == 1
                                             'parent',Fig.UI.PanelH);
     end
     set(Fig.UI.InputHandle(1),'value',PD.FilterOn);
+    set(Fig.UI.InputHandle(6),'value',PD.Inverted);
 end
 
 uiwait(Fig.H);
+
 
 end
 
@@ -157,6 +163,8 @@ switch indx
     case 5
         close(Fig.H);
         return
+    case 6
+        PD.Inverted = get(hObj,'value');
 end
 UpdateFig(indx);
 
@@ -181,6 +189,8 @@ switch indx
         set(Fig.ThreshH, 'xdata', repmat(PD.Thresh,[1,2]));
     case 4
         set(Fig.ThreshFiltH, 'xdata', repmat(PD.ThreshFilt,[1,2]));
+    case 6
+        
 end
 UpdateFilt;
 
@@ -210,8 +220,13 @@ set(Fig.TCthresh(1), 'ydata', PD.ThreshSignal*range(PD.SignalFilt));
 set(Fig.TCthresh(2), 'ydata', PD.ThreshSignal);
 
 %========== Update plots
-PD.OnSamples        = find(diff(PD.ThreshSignal)==1);                        	% Get photodiode onset samples
-PD.OffSamples       = find(diff(PD.ThreshSignal)==-1);                       	% Get photodiode offset samples
+if PD.Inverted == 0
+    PD.OnSamples        = find(diff(PD.ThreshSignal)==1);                        	% Get photodiode onset samples
+    PD.OffSamples       = find(diff(PD.ThreshSignal)==-1);                       	% Get photodiode offset samples
+else
+  	PD.OnSamples        = find(diff(PD.ThreshSignal)==-1);                        	% Get photodiode onset samples
+    PD.OffSamples       = find(diff(PD.ThreshSignal)==1);                       	% Get photodiode offset samples
+end
 PD.OnTimes          = PD.TimeStamps(PD.OnSamples);
 PD.OffTimes         = PD.TimeStamps(PD.OffSamples);       
 if numel(PD.OnTimes) ~= numel(PD.OffTimes) 
@@ -231,5 +246,9 @@ if PD.OnOffMatch   == 1
 else
     set(Fig.axh(5), 'color', [0.5,0.5,0.5]);
 end
+
+delete(Fig.PDonsets);
+axes(Fig.axh(4));
+Fig.PDonsets = plot(PD.OnTimes, ones(size(PD.OnTimes)), '*r');
 
 end

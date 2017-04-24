@@ -15,7 +15,7 @@ try
         DGZ.e_pre{j}{2}(ismember(DGZ.e_pre{j}{2}, ' ()!?*-:%')) = '_';   	% Remove punctuation from parameter names
         if ~isempty(DGZ.e_pre{j}{2})                                       	% If parameter name cell is not empty...
             try
-                eval(sprintf('ExpParam(%d).%s = %d;', i, DGZ.e_pre{j}{2}, str2double(DGZ.e_pre{j+1}{2})));
+                eval(sprintf('ExpParam.%s = %d;', DGZ.e_pre{j}{2}, str2double(DGZ.e_pre{j+1}{2})));
             end
         else
             break;                                                              

@@ -7,9 +7,9 @@ function MF3D_PlotResponses_Depth(Subject, Date, Channel, CellIndx, Output)
 %==========================================================================
 
 if nargin == 0
-    Subject     = 'Matcha';
-    Date        = '20160616';
-    Channel     = 5;
+    Subject     = 'Avalanche';
+    Date        = '20160701';
+    Channel     = 128;
     CellIndx   	= 1;
     Output      = 'gif';
 end
@@ -116,14 +116,16 @@ for exp = 1:numel(Params.Expressions)
             line = 1;
             for c = 1:numel(CondIndx)
                 for t = 1:size(AllSpikes, 3)
-                     if ~isnan(AllSpikes{Cell, CondIndx(c), t})
+                	if ~isnan(AllSpikes{Cell, CondIndx(c), t})
                         StereoSDF{exp,d,dist}(end+1,:) = hist(AllSpikes{Cell, CondIndx(c), t}, HistBins)*10^3/diff(HistBins([1,2]));
                         for sp = 1:numel(AllSpikes{Cell, CondIndx(c), t})                                                          % For each spike...
                             rph = plot(repmat(AllSpikes{Cell, CondIndx(c), t}(sp), [1,2]), [line-1, line], '-k');                   % Draw a vertical line
                          	hold on;
-                     	end
-                        line = line+1;
-                     end
+                        end
+                    elseif isnan(AllSpikes{Cell, CondIndx(c), t})
+                        StereoSDF{exp,d,dist}(end+1,:) = zeros(1,numel(HistBins));
+                    end
+                    line = line+1;
                 end
             end
             axis tight
@@ -162,7 +164,7 @@ for exp = 1:numel(Params.Expressions)
             ph(end+1) = patch(Twin([1,1,2,2]), Ylims([1,2,2,1]), Ylims([1,2,2,1]), 'facecolor', WinColor, 'edgecolor', 'none', 'facealpha', WinAlpha);
             lh(end+1) = plot([0,0],Ylims, '-k','linewidth',2);
             uistack(ph(end), 'bottom')
-          	set(gca,'xlim', Xlims, 'ylim', Ylims);
+          	set(gca,'xlim', Xlims, 'ylim', Ylims, 'xtick', Xlims(1):100:Xlims(2));
             if ismember(SDFAxIndx(AxIndx), [1:12:(6*12)])
                 ylabel(sprintf('Dist = %d cm', Params.Distances(dist)), 'fontsize', 16);
             else

@@ -122,8 +122,10 @@ for exp = 1:numel(Params.Expressions)
                             rph = plot(repmat(AllSpikes{Cell, CondIndx(c), t}(sp), [1,2]), [line-1, line], '-k');  	% Draw a vertical line
                             hold on;
                          end
-                        line = line+1;
+                     elseif isnan(AllSpikes{Cell, CondIndx(c), t})
+                        OrientationSDF{exp,az,el}(end+1,:) = zeros(1,numel(HistBins));
                      end
+                     line = line+1;
                 end
             end
             axis tight
@@ -163,7 +165,7 @@ for exp = 1:numel(Params.Expressions)
             lh(end+1) = plot([0,0],Ylims, '-k','linewidth',2);
             uistack(ph(end), 'bottom');
             
-            set(gca,'xlim', Xlims, 'ylim', Ylims);
+            set(gca,'xlim', Xlims, 'ylim', Ylims,'xtick', Xlims(1):100:Xlims(2));
             if ismember(SDFAxIndx(AxIndx), [1:12:(6*12)])
                 ylabel(sprintf('%d °', Params.Elevations(el)), 'fontsize', 16);
             else

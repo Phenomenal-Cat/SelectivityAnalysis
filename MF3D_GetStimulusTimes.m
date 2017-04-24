@@ -1,4 +1,4 @@
-function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpType, Verbose)
+% function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpType, Verbose)
 
 %======================== GetStimulusTimes.m ==============================
 % This function retreives the timing and stimulus identity information for
@@ -17,13 +17,14 @@ function [Stim, QNX, PD] = GetStimulusTimes(ExpName, SubjectID, DateString, ExpT
 %   13/06/2016 - Written by APM (murphyap@mail.nih.gov)
 %==========================================================================
 
-if nargin == 0
-    ExpName     = 'StereoFaces';
-    SubjectID   = 'Matcha';
-    DateString  = '20160615';
-    ExpType     = 2;
+% if nargin == 0
+    ExpName     = 'FingerPrint';
+    SubjectID   = 'Spice';
+    DateString  = '20160622';
+    ExpType     = 4;
+    OnlyCompletedObs = 0;           % 1 = only include trials from completes obs blocks
     Verbose     = 1;
-end
+% end
 
 %============== SET PATHS FOR CURRENT SYSTEM
 [~,CompName] = system('hostname');  
@@ -32,7 +33,7 @@ if strcmpi(CompName(1:end-1), 'Aidans-MacBook-Pro.local')
     TDTdir      = fullfile('/Volumes/Seagate Backup 1/NeuralData/FacePatchPilot/TDT_converted/', SubjectID, DateString);
     QNX.dir     = fullfile('/Volumes/Seagate Backup 1/NeuralData/FacePatchPilot/QNX/', SubjectID, DateString);
 else
-    OutputFile  = fullfile('/Volumes/procdata/murphya/Physio/', ExpName, 'Timing', ExpName, sprintf('StimTimes_%s_%s.mat', SubjectID, DateString));
+    OutputFile  = fullfile('/Volumes/procdata/murphya/Physio/StereoFaces/Timing', ExpName, sprintf('StimTimes_%s_%s.mat', SubjectID, DateString));
     TDTdir      = fullfile('/Volumes/RAWDATA/murphya/Physio/TDT_converted/', SubjectID, DateString);
     QNX.dir     = fullfile('/Volumes/RAWDATA/murphya/Physio/QNX/', SubjectID, DateString);
 end
@@ -50,11 +51,16 @@ QNX.codes.Finish        = 1999;     %% the ending time of block;
 DGZFiles = wildcardsearch(QNX.dir, sprintf('%s_%s_%s*.dgz', SubjectID, DateString, ExpName));
 for i = 1:numel(DGZFiles)                                                       % For each .dgz file...
     fprintf('Loading DGZ %s...\n', DGZFiles{i});
-    [ExpParam(i), DGZ(i)] = MF3D_LoadDGZdata(DGZFiles{i});
+    try
+        [ExpParam(i), DGZ(i)] = MF3D_LoadDGZdata(DGZFiles{i});
+    catch
+        DGZ(i).e_params = [];
+    end
 end
-AllBlocks       = {ExpParam.Experiment};
-NoName          = find(cellfun(@isempty,  AllBlocks));
-
+if isfield(ExpParam, 'Experiment')
+    AllBlocks       = {ExpParam.Experiment};
+    NoName          = find(cellfun(@isempty,  AllBlocks));
+end
 TrialsPerObs  	= unique([ExpParam.Trials_Per_Obs]);
 if numel(TrialsPerObs) > 1
     fprintf('WARNING: number of trials per obs was not kept constant during this session!\n');
@@ -67,11 +73,12 @@ elseif isempty(TrialsPerObs)
     end
 end
 
+
 %======================== Load all data
 PD.Signal   = [];
 AllQNXtimes = [];
 AllQNXcodes = [];
-DataTypes = {'AnlgSignal','QNX'};
+DataTypes   = {'AnlgSignal','QNX'};
 for dt = 1:numel(DataTypes)
     Filename = wildcardsearch(TDTdir, ['*',ExpName,'*',DataTypes{dt},'*']);
     if numel(Filename)> 1
@@ -104,9 +111,9 @@ for dt = 1:numel(DataTypes)
             else
                 AllQNXtimes = QNXtimes;
             end
-
-         	QNXcodes(QNXcodes>189 & QNXcodes <= 2*189) = QNXcodes(QNXcodes>189 & QNXcodes <= 2*189)-189;    % <<<<<<<<<< TEMPORARY HACK FOR MATCHA FEAR EXPERIMENT
-  
+            if strcmp(ExpName, 'StereoFaces') & strcmp(SubjectID, 'Matcha') & strcmp(DateString, '20160615')  	% <<<<<<<<<< TEMPORARY HACK FOR MATCHA FEAR EXPERIMENT
+                QNXcodes(QNXcodes>189 & QNXcodes <= 2*189) = QNXcodes(QNXcodes>189 & QNXcodes <= 2*189)-189;    % <<<<<<<<<< TEMPORARY HACK FOR MATCHA FEAR EXPERIMENT
+            end
             AllQNXcodes = [AllQNXcodes, QNXcodes];
         end
     end
@@ -119,11 +126,15 @@ for p = 1:numel(PD.OnTimes)                                              	% For 
 end
 NonStimOnsets       = find(ismember(PD.QNXcodes, [QNX.codes.Begin, QNX.codes.FixOn, QNX.codes.Finish]));	% Find all photodiode onsets not related to stimuli
 NonStimDiffs        = diff(NonStimOnsets)-1;                            	% Find the number of photodiode onsets between non-stim onsets
-CompletedObs        = find(NonStimDiffs==TrialsPerObs);                    	% Find observations for which all trials were completed
-CompletedObsBegin   = NonStimOnsets(CompletedObs);                          
-StimOnCompBlock     = [];
-for t = 1:TrialsPerObs
-    StimOnCompBlock	= sort([StimOnCompBlock, CompletedObsBegin+t]);             
+if OnlyCompletedObs == 1
+    CompletedObs        = find(NonStimDiffs==TrialsPerObs);                    	% Find observations for which all trials were completed
+    CompletedObsBegin   = NonStimOnsets(CompletedObs);                          
+    StimOnCompBlock     = [];
+    for t = 1:TrialsPerObs
+        StimOnCompBlock	= sort([StimOnCompBlock, CompletedObsBegin+t]);             
+    end
+elseif OnlyCompletedObs == 0
+    StimOnCompBlock = find(PD.QNXcodes>0 & PD.QNXcodes<=189);
 end
 StimOnTimes         = PD.OnTimes(StimOnCompBlock);                         	% Find the photodiode onset times for all valid stimulus presentations
 StimOnIDs           = PD.QNXcodes(StimOnCompBlock);                       	% Find the stimulus ID number for each valid stimulus presentations
@@ -181,21 +192,21 @@ if Verbose == 1
 end
 
 
-function [ExpParam, DGZ] = LoadDGZdata(DGZfile)
-
-DGZ                 = dg_read(DGZfile);                                 % Load the .dgz file            
-par_num             = size(DGZ.e_pre,1);                              	% Count how many params
-ExpParam.Experiment = DGZ.e_pre{1}{2};                                  % Get experiment name
-ExpParam.Subject    = DGZ.e_pre{2}{2};                                	% Get subject name
-ExpParam.ADCperDeg  = DGZ.e_params{1}{2};                             	% Get ADC/deg scale
-for j = 3:2:(floor(par_num/2)*2)                                       	% For each parameter...
-    DGZ.e_pre{j}{2}(ismember(DGZ.e_pre{j}{2}, ' ()!?*-:')) = '_';    	% Remove punctuation from parameter names
-    if ~isempty(DGZ.e_pre{j}{2})                                       	% If parameter name cell is not empty...
-        eval(sprintf('ExpParam.%s = %d;', DGZ.e_pre{j}{2}, str2double(DGZ.e_pre{j+1}{2})));
-    else
-        return                                                              
-    end
-end
-%             tmp1 = getEVTParams(DGZ,26,1,0);           	% Use dg utils to get values
-%             tmp2 = getEVTParams(DGZ,26,2,0);
-%             Alt_ADCdegHV{d} = [tmp1, tmp2];
+% function [ExpParam, DGZ] = LoadDGZdata(DGZfile)
+% 
+% DGZ                 = dg_read(DGZfile);                                 % Load the .dgz file            
+% par_num             = size(DGZ.e_pre,1);                              	% Count how many params
+% ExpParam.Experiment = DGZ.e_pre{1}{2};                                  % Get experiment name
+% ExpParam.Subject    = DGZ.e_pre{2}{2};                                	% Get subject name
+% ExpParam.ADCperDeg  = DGZ.e_params{1}{2};                             	% Get ADC/deg scale
+% for j = 3:2:(floor(par_num/2)*2)                                       	% For each parameter...
+%     DGZ.e_pre{j}{2}(ismember(DGZ.e_pre{j}{2}, ' ()!?*-:')) = '_';    	% Remove punctuation from parameter names
+%     if ~isempty(DGZ.e_pre{j}{2})                                       	% If parameter name cell is not empty...
+%         eval(sprintf('ExpParam.%s = %d;', DGZ.e_pre{j}{2}, str2double(DGZ.e_pre{j+1}{2})));
+%     else
+%         return                                                              
+%     end
+% end
+% %             tmp1 = getEVTParams(DGZ,26,1,0);           	% Use dg utils to get values
+% %             tmp2 = getEVTParams(DGZ,26,2,0);
+% %             Alt_ADCdegHV{d} = [tmp1, tmp2];
