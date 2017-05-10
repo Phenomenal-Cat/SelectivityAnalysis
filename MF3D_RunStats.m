@@ -10,7 +10,7 @@ function MF3D_RunStats(Subject, Channel, Cell)
 
 if nargin == 0
     Subject     = 'Avalanche';
-    Channel     = 127;
+    Channel     = 91;
     Cell        = 1;
 end
 
@@ -23,7 +23,7 @@ switch Subject
         Dates   = {'20160620','20160621','20160622','20160623','20160624'};
 end
 
-for d = 1:numel(Dates)
+for d = 3%1:numel(Dates)
     MF3D_RunSessionStats(Subject, Dates{d}, Channel, Cell);
 end
 

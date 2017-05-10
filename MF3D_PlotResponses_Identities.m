@@ -1,8 +1,8 @@
 function MF3D_PlotResponses_Identities(Subject, Date, Channel, CellIndx, Output)
 
 %===================== MF3D_PlotResponses_Identities.m ====================
-% Plot facial epxression tuning for STS cells tested in 'StereoFace' pilot
-% experiments.
+% Plot facial identity x head orientation tuning for STS cells tested in 
+% 'StereoFace' pilot experiments.
 %
 %==========================================================================
 
@@ -17,15 +17,15 @@ end
 switch Subject
     case 'Avalanche'
         if ~any(~cellfun(@isempty, strfind({'20160712','20160713'}, Date)))
-            error('Invalid session for expression analysis!')
+            error('Invalid session for identity analysis!')
         end
     case 'Matcha'
         if ~any(~cellfun(@isempty, strfind({'20160719','20160720','20160721'}, Date)))
-            error('Invalid session for expression analysis!')
+            error('Invalid session for identity analysis!')
         end
     case 'Spice'
 %         if ~any(~cellfun(@isempty, strfind({'20160623','20160624'}, Date)))
-            error('Invalid session for expression analysis!')
+            error('Invalid session for identity analysis!')
 %         end
 end
 
@@ -35,8 +35,8 @@ if ~exist('AllSpikes','var')
     if ismac, Append = '/Volumes'; end
     StimDir                 = fullfile(Append, '/projects/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_1/');
     TimingData              = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
-    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
-    HeadOrientationDir      = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNGs/');
+    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/StereoFaces/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
+    HeadOrientationDir      = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotExpStim/');
     load(TimingData)
     load(ProcessedSessionData);
 end

@@ -18,10 +18,10 @@
 %==========================================================================
 
 % if nargin == 0
-    ExpName     = 'FingerPrint';
+    ExpName     = 'FingerPrint60';
     SubjectID   = 'Spice';
-    DateString  = '20160622';
-    ExpType     = 4;
+    DateString  = '20170503';
+    ExpType     = 6;
     OnlyCompletedObs = 0;           % 1 = only include trials from completes obs blocks
     Verbose     = 1;
 % end
@@ -46,9 +46,14 @@ QNX.codes.FixOn         = 1001;     %% the time of fix cross on;
 QNX.codes.Reward        = 1066;     %% every reward;
 QNX.codes.Finish        = 1999;     %% the ending time of block;
 
+PDchannelNo = 7;
+if datenum(DateString,'yyyymmdd')>= 736818
+    PDchannelNo = 3;
+end
+
 
 %% ======================== READ DGZ FILE DATA ============================
-DGZFiles = wildcardsearch(QNX.dir, sprintf('%s_%s_%s*.dgz', SubjectID, DateString, ExpName));
+DGZFiles = sort_nat(wildcardsearch(QNX.dir, sprintf('%s_%s_%s*.dgz', SubjectID, DateString, ExpName)));
 for i = 1:numel(DGZFiles)                                                       % For each .dgz file...
     fprintf('Loading DGZ %s...\n', DGZFiles{i});
     try
@@ -78,9 +83,9 @@ end
 PD.Signal   = [];
 AllQNXtimes = [];
 AllQNXcodes = [];
-DataTypes   = {'AnlgSignal','QNX'};
+DataTypes   = {'AnlgSignal','QNX'}; 
 for dt = 1:numel(DataTypes)
-    Filename = wildcardsearch(TDTdir, ['*',ExpName,'*',DataTypes{dt},'*']);
+    Filename = sort_nat(wildcardsearch(TDTdir, ['*',ExpName,'*',DataTypes{dt},'*']));
     if numel(Filename)> 1
         answer = questdlg(sprintf('%d %s files were located. Do you want to merge them?', numel(Filename), DataTypes{dt}), 'Multiple files found','Merge all','Merge some','Abort','Merge some');
         if strcmpi(answer, 'Abort')
@@ -98,16 +103,21 @@ for dt = 1:numel(DataTypes)
         
         %=================== READ PHOTODIODE SIGNAL =======================
         if strcmpi(DataTypes{dt}, 'AnlgSignal')
+            if isnan(anlgSampleRate)
+                anlgSampleRate = 1017.3;                                    % <<<<< Default sample rate used in SCNI rig #2 in 2017
+            end
             [anlgCh,anlgSig,anlgSigPerSample] = size(anlgCodesAll);                                                 % Check matrix dimensions
             for n = 1:anlgCh                                                                                        % For each channel...
                 AllAnlgCodes(n,:) = reshape(permute(anlgCodesAll(n,:,:),[3,2,1]),[1,numel(anlgCodesAll(n,:,:))]);   % Reshape analog codes
             end
             BlockEndTime(f)     = size(AllAnlgCodes,2)/anlgSampleRate;
-            PD.Signal           = [PD.Signal, AllAnlgCodes(7,:)];
+            PD.Signal           = [PD.Signal, AllAnlgCodes(PDchannelNo,:)];
             clear AllAnlgCodes;
+            
+     	%======================= READ QNX STROBES =========================
         elseif strcmpi(DataTypes{dt}, 'QNX')
             if f > 1
-                AllQNXtimes = [AllQNXtimes, QNXtimes+BlockEndTime(f-1)+(1/anlgSampleRate)];
+                AllQNXtimes = [AllQNXtimes, QNXtimes+sum(BlockEndTime(1:(f-1)))+(1/anlgSampleRate)];
             else
                 AllQNXtimes = QNXtimes;
             end
@@ -119,22 +129,34 @@ for dt = 1:numel(DataTypes)
     end
 end
 
+
+% PD.Signal = CleanDiodeFlicker(PD.Signal);       	% <<<<<<< TEMPORARY FIX FOR PHOTODIODE IN SESSION #1 IN RIG 2
+
+
+%============== Get experiment specific params
+if strcmp(ExpName, 'StereoFaces')
+    Params             	= MF3D_GetConditions(ExpType);
+else
+    Params = [];
+end
+
+%===================== ANALYSE PHOTODIODE SIGNAL ==========================
 PD = CheckPhotodiode(PD.Signal, anlgSampleRate);                            % Extract photodiode state changes from signal
 for p = 1:numel(PD.OnTimes)                                              	% For each photodiode onset...
     QNXindx         = find(AllQNXtimes < PD.OnTimes(p));                  	% Find the preceding code that was received from QNX
-    PD.QNXcodes(p)  = AllQNXcodes(QNXindx(end));                           	
+    PD.QNXcodes(p)  = AllQNXcodes(QNXindx(end));            
 end
 NonStimOnsets       = find(ismember(PD.QNXcodes, [QNX.codes.Begin, QNX.codes.FixOn, QNX.codes.Finish]));	% Find all photodiode onsets not related to stimuli
 NonStimDiffs        = diff(NonStimOnsets)-1;                            	% Find the number of photodiode onsets between non-stim onsets
 if OnlyCompletedObs == 1
-    CompletedObs        = find(NonStimDiffs==TrialsPerObs);                    	% Find observations for which all trials were completed
+    CompletedObs        = find(NonStimDiffs==TrialsPerObs);               	% Find observations for which all trials were completed
     CompletedObsBegin   = NonStimOnsets(CompletedObs);                          
     StimOnCompBlock     = [];
     for t = 1:TrialsPerObs
         StimOnCompBlock	= sort([StimOnCompBlock, CompletedObsBegin+t]);             
     end
 elseif OnlyCompletedObs == 0
-    StimOnCompBlock = find(PD.QNXcodes>0 & PD.QNXcodes<=189);
+    StimOnCompBlock = find(PD.QNXcodes>0 & PD.QNXcodes<=numel(Params.Filenames));
 end
 StimOnTimes         = PD.OnTimes(StimOnCompBlock);                         	% Find the photodiode onset times for all valid stimulus presentations
 StimOnIDs           = PD.QNXcodes(StimOnCompBlock);                       	% Find the stimulus ID number for each valid stimulus presentations
@@ -144,6 +166,8 @@ for s = 1:max(Stim.AllStimuli)                                              % Fo
     Stim.Repetitions(s) = numel(Stim.Onsets{s});                            % Count how many repetitions of the stimulus were presented
 end
 
+
+%========== Alternative method
 
 
 %============= Get all stimulus ID numbers from DGZ
@@ -163,11 +187,7 @@ end
 
 BlockStartIndx          = find(QNXcodes == QNX.codes.Begin);
 BlockStartTimes         = QNXtimes(BlockStartIndx);
-if strcmp(ExpName, 'StereoFaces')
-    Params             	= MF3D_GetConditions(ExpType);
-else
-    Params = [];
-end
+
 save(OutputFile, 'Stim', 'ExpParam', 'QNX', 'PD', 'Params');
 
 

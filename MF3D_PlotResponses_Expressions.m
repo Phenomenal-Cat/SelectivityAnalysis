@@ -35,7 +35,7 @@ if ~exist('AllSpikes','var')
     if ismac, Append = '/Volumes'; end
     StimDir                 = fullfile(Append, '/projects/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_1/');
     TimingData              = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
-    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
+    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/StereoFaces/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
     HeadOrientationDir      = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNGs/');
     load(TimingData)
     load(ProcessedSessionData);

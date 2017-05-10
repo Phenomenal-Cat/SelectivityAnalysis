@@ -7,29 +7,30 @@ function MF3D_PlotResponses_Orientations(Subject, Date, Channel, CellIndx, Outpu
 %==========================================================================
 
 if nargin == 0
-    Subject     = 'Matcha';
-    Date        = '20160613';
-    Channel     = 48;
-%   	Subject     = 'Avalanche';
-%     Date        = '20160628';
-%     Channel     = 117;
-    CellIndx   	= 2;
+    Subject     = 'Avalanche';
+    Date        = '20160714';
+    Channel     = 91;
+    CellIndx   	= 1;
     Output      = 'gif';
 end
 
 
 Expression  = 'Neutral';
+Species     = 'Macaque';
 switch Subject
     case 'Avalanche'
-        if datenum(Date, 'yyyymmdd')>datenum('20160629','yyyymmdd')
-            error('Invalid session for expression analysis!')
-        end
+%         if datenum(Date, 'yyyymmdd')>datenum('20160629','yyyymmdd')
+%             error('Invalid session for orientation analysis!')
+%         end
         if strcmp(Date, '20160629')
             Expression = 'Fear';
         end
+        if datenum(Date, 'yyyymmdd')>= datenum('20160714','yyyymmdd')
+            Species = 'Human';
+        end
     case 'Matcha'
         if datenum(Date, 'yyyymmdd')>datenum('20160615','yyyymmdd')
-            error('Invalid session for expression analysis!')
+            error('Invalid session for orientation analysis!')
         end
      	if strcmp(Date, '20160615')
             Expression = 'Fear';
@@ -46,8 +47,8 @@ if ~exist('AllSpikes','var')
     if ismac, Append = '/Volumes'; end
     StimDir                 = fullfile(Append, '/projects/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_1/');
     TimingData              = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
-    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
-    HeadOrientationDir      = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotData/PNGs/');
+    ProcessedSessionData    = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/PSTHs/StereoFaces/',Subject,Date,sprintf('%s_%s.mat', Subject, Date));
+    HeadOrientationDir      = fullfile(Append, '/projects/murphya/MacaqueFace3D/PilotExpStim/');
     load(TimingData)
     load(ProcessedSessionData);
 end
@@ -57,7 +58,13 @@ if ~exist(SaveDir, 'dir')
 end
 
 %=========== Load head oreintation image
-HeadOrientationImage    = fullfile(HeadOrientationDir, sprintf('OrientStim_%s.png', Expression));
+switch Species
+    case 'Macaque'
+        HeadOrientationImage    = fullfile(HeadOrientationDir, sprintf('OrientStim_%s.png', Expression));
+    case 'Human'
+        Identity = 1;
+        HeadOrientationImage    = fullfile(HeadOrientationDir, sprintf('HumanID_%d.png', Identity));
+end
 [HeadIm,cm,HeadImAlpha]	= imread(HeadOrientationImage);                                   % Load head orientation overlay
 HeadImSize              = size(HeadIm);
 
@@ -67,14 +74,16 @@ fh          = figure('position', get(0,'screensize')./[1 1 2 1]);   	% Open half
 NoAxY       = numel(Params.Elevations)*2;
 NoAxX       = numel(Params.Azimuths);       
 Axh         = tight_subplot(NoAxY, NoAxX,0, 0.05,0.05);           	% Generate axes
-RastAxIndx  = [1:7, 15:21, 29:35];                                  % Specify which axes are for raster plots
+RastAxIndx  = [];
+for r = 1:numel(Params.Elevations)
+    RastAxIndx(end+1:end+NoAxX) = (1:NoAxX) + (r-1)*(NoAxX*2);    	% Specify which axes are for raster plots
+end
+%RastAxIndx  = [1:7, 15:21, 29:35];                                  % Specify which axes are for raster plots
 SDFAxIndx   = RastAxIndx+NoAxX;                                   	% Specify axes for SDF plots
 Ylims       = [0 100];                                            	% Specify y-axis limits for SDFs (spikes per second)
 Xlims       = [-100, 400];                                          % Specify x-axis limits for all axes (ms)       
 WinColor    = [0.5, 0.5, 0.5];                                      % Color of sliding window 
 WinAlpha    = 0.5;                                                  % Transparency of sliding window
-AxesXshift  = [-0.01, 0.01, 0.03,0.05];
-ExpColors   = [0.75,0.75,1; 1,1,0.75; 0.75,1,0.75; 1, 0.75, 0.75];
 SDFdims     = [0.1,0.05];
 Rastdims    = [0.1,0.04];
 PlotXpos    = 0.1+(0:(NoAxX-1))*(SDFdims(1)+0.02);
@@ -128,7 +137,7 @@ for el = 1:numel(Params.Elevations)
         if nx == 0
             nx = NoAxX;
         end
-        set(gca, 'Position', [PlotXpos(nx), PlotYpos(ny),Rastdims]);
+        set(gca, 'Position', [PlotXpos(nx), PlotYpos(ny), Rastdims]);
 
 
         %========= Calculate time window matrices
@@ -232,7 +241,7 @@ grid on
 box off
 LegendTextEl{end+1} = 'Mean';
 legend(plh, LegendTextEl, 'location', 'EastOutside', 'fontsize',18);
-set(gca,'xlim',[0.5, 7.5],'xtick',1:1:7,'xticklabel', Params.Azimuths,'tickdir','out','fontsize',16);
+set(gca,'xlim',[0.5, numel(Params.Azimuths)+0.5],'xtick',1:1:numel(Params.Azimuths),'xticklabel', Params.Azimuths,'tickdir','out','fontsize',16);
 set(gca,'position', [0.139, 0.0683, 0.67, 0.2]);
 xlabel('Azimuth (°)', 'fontsize', 18);
 ylabel('\Delta Firing rate (Hz)',  'fontsize', 18);

@@ -1,4 +1,4 @@
-% function MF3D_PlotPSTH(SpikeFiles, TimingFile, CondFile)
+% function STSpulv_PlotPSTH(SpikeFiles, TimingFile, CondFile)
 
 %============================= MF3D_PlotPSTHs.m ===========================
 % This function loads WaveClus spike sorted data form the StereoFaces 

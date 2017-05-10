@@ -101,13 +101,10 @@ Date            = '20160715';
 StimDir         = fullfile(Append, 'projects/murphya/Stimuli/BlenderRenders/HumanFaces/');
 TimingData      = fullfile(Append, '/procdata/murphya/Physio/StereoFaces/Timing/StereoFaces/',sprintf('StimTimes_%s_%s.mat', Subject, Date));
 load(TimingData);
-ImCrop = [500, 100];                                                        % Number of pixels to crop from each edge in X and Y
-Scale   = 1;
-Dist = 1;
 
 for id = 1:numel(Params.MonkeyIDs)
-    figure('position', get(0,'Screensize'));
-    Axh = tight_subplot(numel(Params.Elevations),numel(Params.Azimuths),0, 0,0);
+    figure('position', [-1911, 168, 786, 840]);
+    Axh = tight_subplot(3,numel(Params.Azimuths),0, 0,0);
     AxIndx  = 1;
     for el = 1:numel(Params.Elevations)
         for az = 1:numel(Params.Azimuths)
@@ -123,5 +120,5 @@ for id = 1:numel(Params.MonkeyIDs)
             AxIndx = AxIndx+1;
         end
     end
-    export_fig(fullfile('/Volumes/projects/murphya/MacaqueFace3D/PilotExpStim/',sprintf('HumanID_%d.png',id)), '-png','-transparent');
+    export_fig(fullfile('/Volumes/projects/murphya/MacaqueFace3D/PilotData/PNGs/',sprintf('MonkeyID_%d.png',id)), '-png','-transparent');
 end

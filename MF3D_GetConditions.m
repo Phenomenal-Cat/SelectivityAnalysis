@@ -1,51 +1,71 @@
-function Params = GetConditions(ExpType)
+function Params = MF3D_GetConditions(ExpType)
 
-%=========================== GetConditions.m ==============================
+%======================== MF3D_GetConditions.m ============================
 % Reconstruct which stimulus numbers correspond to which conditions for
 % each of the different experiment types ('ExpType') in the apm_StereoFaces
-% pilot experiments.
+% pilot experiments. Input experiment types are:
+%       1) Macaque face, single identity, neutral, 3x7 angles
+%       2) Macaque face, single identity, fear grimace, 3x7 angles
+%       3) Macaque face, single identity, 4 expressions, 3x3 angles, convex & concave
+%       4) Macaque face, 5 identities, neutral, 3x3 angles
+%       5) Human face, 2 identities, 1 expression, 3x5 angles
+%       
+%
 %==========================================================================
 
-if nargin ==0
-    ExpType = 1;
-end
-Params.ExpType = ExpType;
-
-[~,CompName] = system('hostname');  
-if strcmpi(CompName(1:end-1), 'Aidans-MacBook-Pro.local')
-    FaceImageDir    = 'P:\murphya\MacaqueFace3D\BlenderFiles\Renders\';
+if ExpType == 5
+    FaceImageDir    = 'P:\murphya\Stimuli\BlenderRenders\HumanFaces\';
 else
     FaceImageDir    = 'P:\murphya\MacaqueFace3D\BlenderFiles\Renders\';
 end
 
-if ExpType < 4
-    Params.MonkeyIDs    = 1;
-    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','Expressions'};     % All factors tested
-    Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
-elseif ExpType >= 4
+
+if ExpType == 4
     Params.MonkeyIDs 	= [1,2,3,4,5];
-    Params.Factors      = {'Elevations','Azimuths','Distances','Scales','MonkeyIDs'};     	% All factors tested
-    Params.CondMatCol 	= [3, 2, 4, 5, 1];                                                 	% Which column is each factor coded in?
+else
+    Params.MonkeyIDs   = 1;
 end
 
+Params.Species     = 'Macaque';
 Params.Elevations  = [-30, 0, 30];
 Params.Distances   = [-20, 0, 20];
-if ExpType == 1
-    Params.Expressions  = {'neutral'};
-    Params.Azimuths     = [-90, -60, -30, 0, 30, 60, 90];
-    Params.Scales       = [10, 12, 20];
-elseif ExpType == 2
-    Params.Expressions = {'fear'};
-    Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
-    Params.Scales      = [10, 12, 20];
-elseif ExpType == 3
-    Params.Expressions = {'neutral','fear','lipsmack','threat'};
-    Params.Azimuths    = [-30, 0, 30];
-    Params.Scales      = [12];
-elseif ExpType == 4
-    Params.Expressions = {'neutral'};
-    Params.Azimuths    = [-30, 0, 30];
-    Params.Scales      = [12];
+    
+switch ExpType
+    case 1
+        Params.Expressions = {'neutral'};
+        Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
+        Params.Scales      = [10, 12, 20];
+
+    case 2
+        Params.Expressions = {'fear'};
+        Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
+        Params.Scales      = [10, 12, 20];
+        
+    case 3
+        Params.Expressions = {'neutral','fear','lipsmack','threat'};
+        Params.Azimuths    = [-30, 0, 30];
+        Params.Scales      = [12];
+        
+    case 4
+        Params.Expressions = {'neutral'};
+        Params.Azimuths    = [-30, 0, 30];
+        Params.Scales      = [12];
+        
+    case 5
+        Params.Species     = 'Human';
+        Params.Expressions = {'neutral'};
+        Params.Azimuths    = [-60,-30, 0, 30,60];
+        Params.Scales      = [60, 80];                 % Only 2 scales were shown, although a third scale (120%) was generated
+        Params.MonkeyIDs   = {'Debbie','Ewan'};
+        
+    case 6                                                      % Added 04/22/17 for new Spice data
+       	Params.Expressions = {'neutral','fear','lipsmack','threat'}; 
+        Params.Azimuths    = [-90, -60, -30, 0, 30, 60, 90];
+        Params.Scales      = [10, 12, 20];
+        Params.Distances   = 0;                             	% Only show 1 distance (since presentation is mono)
+        
+    otherwise
+        error('ExpType %d is not recognized!', ExpType);
 end
 
 Indx        = 1;
@@ -55,8 +75,14 @@ for exp = 1:numel(Params.Expressions)
             for d = 1:numel(Params.Distances)
                 for s = 1:numel(Params.Scales)
                     for m = 1:numel(Params.MonkeyIDs)
-                        Params.Filenames{Indx} = sprintf('Macaque_Id%d_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs(m), Params.Expressions{exp}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
-                        Params.FullFilenames{Indx} = fullfile(FaceImageDir, sprintf('Monkey_%d', Params.MonkeyIDs(m)), Params.Filenames{Indx});
+                        switch Params.Species
+                            case 'Macaque'
+                                Params.Filenames{Indx} = sprintf('Macaque_Id%d_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs(m), Params.Expressions{exp}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
+                                Params.FullFilenames{Indx} = fullfile(FaceImageDir, sprintf('Monkey_%d', Params.MonkeyIDs(m)), Params.Filenames{Indx});
+                            case 'Human'
+                                Params.Filenames{Indx} = sprintf('Human_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs{m}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
+                                Params.FullFilenames{Indx} = fullfile(FaceImageDir, Params.Filenames{Indx});
+                        end
                         if numel(Params.MonkeyIDs) == 1
                             Params.ConditionMatrix(Indx,:) = [exp, az, el, d, s];
                         elseif numel(Params.MonkeyIDs)>1
