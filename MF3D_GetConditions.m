@@ -15,8 +15,11 @@ function Params = MF3D_GetConditions(ExpType)
 
 if ExpType == 5
     FaceImageDir    = 'P:\murphya\Stimuli\BlenderRenders\HumanFaces\';
+elseif ExpType == 7
+    FaceImageDir    = 'P:\murphya\MacaqueFace3D\GazeExperiments\Renders\Experiment7_v2\';
 else
     FaceImageDir    = 'P:\murphya\MacaqueFace3D\BlenderFiles\Renders\';
+
 end
 
 
@@ -64,6 +67,12 @@ switch ExpType
         Params.Scales      = [10, 12, 20];
         Params.Distances   = 0;                             	% Only show 1 distance (since presentation is mono)
         
+  	case 7
+        Params.Expressions = {'neutral'};
+        Params.Azimuths    = [-30,-15, 0, -15, 30];
+        Params.Elevations  = [-15, 0, 15];
+        Params.Distances   = 0; 
+        
     otherwise
         error('ExpType %d is not recognized!', ExpType);
 end
@@ -72,23 +81,33 @@ Indx        = 1;
 for exp = 1:numel(Params.Expressions)
     for az = 1:numel(Params.Azimuths)
         for el = 1:numel(Params.Elevations)
-            for d = 1:numel(Params.Distances)
-                for s = 1:numel(Params.Scales)
-                    for m = 1:numel(Params.MonkeyIDs)
-                        switch Params.Species
-                            case 'Macaque'
-                                Params.Filenames{Indx} = sprintf('Macaque_Id%d_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs(m), Params.Expressions{exp}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
-                                Params.FullFilenames{Indx} = fullfile(FaceImageDir, sprintf('Monkey_%d', Params.MonkeyIDs(m)), Params.Filenames{Indx});
-                            case 'Human'
-                                Params.Filenames{Indx} = sprintf('Human_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs{m}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
-                                Params.FullFilenames{Indx} = fullfile(FaceImageDir, Params.Filenames{Indx});
-                        end
-                        if numel(Params.MonkeyIDs) == 1
-                            Params.ConditionMatrix(Indx,:) = [exp, az, el, d, s];
-                        elseif numel(Params.MonkeyIDs)>1
-                            Params.ConditionMatrix(Indx,:) = [m, az, el, d, s];
-                        end
+            if ExpType == 7
+                for gaz = 1:numel(Params.Azimuths)
+                    for gel = 1:numel(Params.Elevations)
+                        Pic.ImgFilenames{Indx} = fullfile(FaceImageDir, sprintf('MacaqueGaze_Neutral_Haz%d_Hel%d_Gaz%d_Gel%d_dist0.png', Params.Azimuths(az), Params.Elevations(el), Params.Azimuths(gaz), Params.Elevations(gel)));
+                      	Pic.ConditionMatrix(Indx,:) = [az, el, gaz, gel];
                         Indx = Indx+1;
+                    end
+                end
+            elseif ExpType <7
+                for d = 1:numel(Params.Distances)
+                    for s = 1:numel(Params.Scales)
+                        for m = 1:numel(Params.MonkeyIDs)
+                            switch Params.Species
+                                case 'Macaque'
+                                    Params.Filenames{Indx} = sprintf('Macaque_Id%d_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs(m), Params.Expressions{exp}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
+                                    Params.FullFilenames{Indx} = fullfile(FaceImageDir, sprintf('Monkey_%d', Params.MonkeyIDs(m)), Params.Filenames{Indx});
+                                case 'Human'
+                                    Params.Filenames{Indx} = sprintf('Human_%s_az%d_el%d_dist%d_sc%d.png',  Params.MonkeyIDs{m}, Params.Azimuths(az), Params.Elevations(el), Params.Distances(d), Params.Scales(s));
+                                    Params.FullFilenames{Indx} = fullfile(FaceImageDir, Params.Filenames{Indx});
+                            end
+                            if numel(Params.MonkeyIDs) == 1
+                                Params.ConditionMatrix(Indx,:) = [exp, az, el, d, s];
+                            elseif numel(Params.MonkeyIDs)>1
+                                Params.ConditionMatrix(Indx,:) = [m, az, el, d, s];
+                            end
+                            Indx = Indx+1;
+                        end
                     end
                 end
             end

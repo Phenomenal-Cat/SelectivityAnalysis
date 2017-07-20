@@ -1,4 +1,4 @@
-function PD = CheckPhotodiode(Signal, SampleRate, PD)
+function PD = CheckPhotodiode(Signal, SampleRate, PD, BlockTimes)
 
 %========================== CheckPhotodiode.m =============================
 % This function analyses the signal from a photodiode attached to the
@@ -72,6 +72,11 @@ if PD.PlotOn == 1
     xlabel('Time (seconds)','fontsize',16);
     legend({'Raw','Filtered','Thresholded'},'Location','EastOutside','fontsize',16);
     title('Photodiode timecourse','fontsize',18)
+    if exist('BlockTimes','var')
+        for b = 1:numel(BlockTimes)
+            plot(repmat(BlockTimes(b),[1,2]), ylim, '-m', 'linewidth',2);
+        end
+    end
     
   	Fig.axh(2) = subplot(3,3,4);
     Fig.HistH = histogram(PD.Signal, 100);

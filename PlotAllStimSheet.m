@@ -6,7 +6,7 @@
 %==========================================================================
 
 
-ImageDir    = '/Volumes/PROJECTS/murphya/MacaqueFace3D/BlenderFiles/Renders/';
+ImageDir    = '/Volumes/PROJECTS/murphya/MacaqueFace3D/BlenderFiles/Renders/Monkey_0';
 SaveDir     = '/Volumes/PROJECTS/murphya/MacaqueFace3D/Figures/';
 
 SqueezeFramed = 1;

@@ -13,9 +13,9 @@ if nargin == 0
 %     Channel     = 71;
 %     Cell        = 1;
 
-    Subject     = 'Spice';
-    Channel     = 44;
-    Cell        = 2;
+    Subject     = 'Matcha';
+    Channel     = 3;
+    Cell        = 1;
 end
 
 switch Subject
@@ -72,10 +72,7 @@ FP.StimOn           = [0, 100];
 
 
 cellindx            = ChIndx(ismember(ChIndx(:,[2,3]), [Channel,Cell],'rows'),1);
-if isempty(cellindx)
-    fprintf('No cell %d on channel %d on %s!\n', Cell, Channel, Date);
-    return
-end
+if isempty(ce
 PlotColors          = [1,0,0; 0 0 1; 0 1 0; 1 0 1; 0 1 1; 1 0.5 0];
 PlotColors2         = PlotColors;
 PlotColors2(PlotColors2==0) = 0.5;

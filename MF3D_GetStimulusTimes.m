@@ -18,10 +18,10 @@
 %==========================================================================
 
 % if nargin == 0
-    ExpName     = 'FingerPrint60';
-    SubjectID   = 'Spice';
-    DateString  = '20170503';
-    ExpType     = 6;
+    ExpName     = 'StereoFaces';
+    SubjectID   = 'Dango';
+    DateString  = '20170622';
+    ExpType     = 7;
     OnlyCompletedObs = 0;           % 1 = only include trials from completes obs blocks
     Verbose     = 1;
 % end
@@ -129,9 +129,9 @@ for dt = 1:numel(DataTypes)
     end
 end
 
-
-% PD.Signal = CleanDiodeFlicker(PD.Signal);       	% <<<<<<< TEMPORARY FIX FOR PHOTODIODE IN SESSION #1 IN RIG 2
-
+if strcmpi(DateString, '20170503')
+    PD.Signal = CleanDiodeFlicker(PD.Signal);                           % <<<<<<< TEMPORARY FIX FOR FAULTY PHOTODIODE SIGNAL IN SPICE SESSION #1 IN RIG 2
+end
 
 %============== Get experiment specific params
 if strcmp(ExpName, 'StereoFaces')
@@ -141,7 +141,7 @@ else
 end
 
 %===================== ANALYSE PHOTODIODE SIGNAL ==========================
-PD = CheckPhotodiode(PD.Signal, anlgSampleRate);                            % Extract photodiode state changes from signal
+PD = CheckPhotodiode(PD.Signal, anlgSampleRate, [], BlockEndTime*10);         	% Extract photodiode state changes from signal
 for p = 1:numel(PD.OnTimes)                                              	% For each photodiode onset...
     QNXindx         = find(AllQNXtimes < PD.OnTimes(p));                  	% Find the preceding code that was received from QNX
     PD.QNXcodes(p)  = AllQNXcodes(QNXindx(end));            
