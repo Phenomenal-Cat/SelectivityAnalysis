@@ -12,4 +12,4 @@ To overcome these limitations and obtain a broader characterization of IT neuron
 <b>Figure 2.</b> Head orientation tuning in an example AM neuron.
 
 
-<b>Murphy AP & Leopold DA (2017). Measuring neuronal selectivity for facial features in macaque inferotemporal cortex through adaptive sampling of feature space. Society for Neuroscience Abstract</b>
+<b>Murphy AP & Leopold DA (2017).</b> Measuring neuronal selectivity for facial features in macaque inferotemporal cortex through adaptive sampling of feature space. Society for Neuroscience Abstract
