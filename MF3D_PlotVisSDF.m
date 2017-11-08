@@ -1,9 +1,9 @@
 % function MF3D_PlotPSTH(SpikeFiles, TimingFile, CondFile)
 
-%============================= MF3D_PlotPSTHs.m ===========================
+%============================= MF3D_PlotVisSDFs.m ===========================
 % This function loads WaveClus spike sorted data form the StereoFaces 
-% experiments and plots post-stimulus time histograms/ spike density
-% functions for each independent variable.
+% experiments and plots spike density functions for each cell, arranged
+% across variables.
 %
 % INPUTS:   SpikeFiles: a cell array of full path strings for all channels
 %                       from the single session to be analysed.
@@ -17,8 +17,8 @@
 
 %============= LOAD DATA
 % if nargin == 0
-    Subject = 'Spice';
-    Date    = '20170731';
+    Subject = 'Avalanche';
+    Date    = '20160627';
     ExpName = 'StereoFaces'; % 'FingerPrint' or 'StereoFaces'
     
     Append  = [];
@@ -52,7 +52,7 @@ if numel(NeuroStruct) > 1
         end
         AllNeuroStruct.blocklength = AllNeuroStruct.blocklength + NeuroStruct(n).blocklength;
     end
-    NeuroStruct = AllNeuroStruct;
+	NeuroStruct = AllNeuroStruct;
 end
 % % NeuroStruct = NeuroStruct(1);   % <<<<<<<<<<< TEMPORARY HACK FOR MATCHA
 
@@ -71,8 +71,8 @@ plot(xlim, [SpsThresh, SpsThresh], '--r');
 xlabel('Cell number','fontsize', 18);
 ylabel('Mean firing rate (Hz)','fontsize', 18);
 title(sprintf('Summary for %s %s %s', Subject, Date, ExpNameString), 'fontsize', 20);
-saveas(gcf, fullfile(ProcDataDir, sprintf('Summary_%s_%s_%s.fig', Subject, Date, ExpNameString)));
-export_fig(fullfile(ProcDataDir, sprintf('Summary_%s_%s_%s.png', Subject, Date, ExpNameString)), '-png');
+% saveas(gcf, fullfile(ProcDataDir, sprintf('Summary_%s_%s_%s.fig', Subject, Date, ExpNameString)));
+% export_fig(fullfile(ProcDataDir, sprintf('Summary_%s_%s_%s.png', Subject, Date, ExpNameString)), '-png');
 [CellRate,CellOrder] = sort(SpikesPerSecond,'descend');
 CellOrder(CellRate<SpsThresh) = [];
 
@@ -86,7 +86,7 @@ PlotColors      = [1 0 0; 1 0.5,0.5];
 SDFline         = 1;
 Xlims       = [-100, 400]; 
 Xticks      = [-100:100:400];
-Ylims       = [0, 100];
+Ylims       = [0, 50];
 switch ExpName
     case 'StereoFaces'
         StimOn      = [0, 300];
@@ -100,8 +100,8 @@ switch ExpName
         error('Unrecognized experiment name: %s!', ExpName);
 end
 
-StimWindow  = [-100, 400];                         % Response window (milliseconds)
-BinWidth    = 10;                                 % Histogram bin width (miliseconds)
+StimWindow  = [-100, 400];                          % Response window (milliseconds)
+BinWidth    = 1;                                    % Histogram bin width (miliseconds)
 HistBins    = linspace(StimWindow(1), StimWindow(2), diff(StimWindow)/BinWidth);
 RasterAxIndx = repmat(1:AxW, [AxH/2,1]) + repmat(0:(AxW*2):((AxW*AxH)-AxW), [AxW,1])';
 RasterAxIndx = reshape(RasterAxIndx', [1, numel(RasterAxIndx)]);
@@ -115,118 +115,116 @@ end
 wbh = waitbar(0,'');
 
 
-for cellno = 1:size(NeuroStruct.cells,1)
+for cellno = 1:numel(CellOrder)
     cell = CellOrder(cellno);
-    Fig.Current     = 1;
-    Fig.H(cell, Fig.Current)  	= figure('position',get(0,'ScreenSize')./[1 1 1 1], 'name',sprintf('%s cell %d', ExpNameString, cell),'renderer','painters');
-    Fig.axh{cell, Fig.Current}	= tight_subplot(AxH, AxW, 0.02, 0.04, 0.04);
-    Fig.axcount(cell, Fig.Current) = 1;
+    if cellno == 1
+        Fig.Current             = 1;
+        Figname                	= sprintf('SDFs_%s_%s_plot%d', Subject, Date, Fig.Current);
+        Fig.H(Fig.Current)  	= figure('position',get(0,'ScreenSize')./[1 1 1 1], 'name',sprintf('%s cell %d', ExpNameString, cell),'renderer','painters');
+        Fig.axh{Fig.Current}	= tight_subplot(AxH, AxW, 0.02, 0.04, 0.04);
+        Fig.axcount(Fig.Current) = 1;
+    end
     if ishandle(wbh)
         waitbar(cellno/size(NeuroStruct.cells,1), wbh, sprintf('Arranging spikes for cell %d of %d...', cellno, size(NeuroStruct.cells,1)));
     end
     
+%     if ~exist([fullfile(SaveFigDir, Figname),'.png'],'file') || OverWrite == 1
     
     %=========== Loop through all stimuli
     for s = 1:numel(Stim.Onsets)
-        
-        Figname = sprintf('%s_%s_ch%d_cell%d_plot%d', Subject, Date, NeuroStruct.cells{cell,1}, NeuroStruct.cells{cell,2}, Fig.Current);
-        if ~exist([fullfile(SaveFigDir, Figname),'.png'],'file') || OverWrite == 1
 
-            %========== Loop through all stimulus repetitions
-            for t = 1:numel(Stim.Onsets{s})
-                WinStart        = (Stim.Onsets{s}(t)-Params.PreTime)*10^3;
-                WinEnd          = (Stim.Onsets{s}(t)+Params.PostTime)*10^3;
-                SpikeIndx       = find(NeuroStruct.cells{cell,3}>WinStart & NeuroStruct.cells{cell,3}<WinEnd);
-                if ~isempty(SpikeIndx)
-                    AllSpikes{cell,s,t}	= NeuroStruct.cells{cell,3}(SpikeIndx)-Stim.Onsets{s}(t)*10^3;
-                else
-                    AllSpikes{cell,s,t}	= NaN;
-                end
-            end
-
-            %============= Plot raster
-            %AxPerFig = Fig.axcount(cell, Fig.Current);
-            AxPerFig    = s-(Fig.Current-1)*AxW*AxH/2;                                                  % Stimulus number for current plot (range: 1-stim per figure)
-            AxIndx      = floor((AxPerFig-1)/AxW)*AxW*2 +mod(AxPerFig-1, AxW)+1;                        % Axis number for current plot (range: 1-AxPerFig)
-            Fig.RasterAx{cell}(s) = Fig.axh{cell, Fig.Current}(AxIndx);
-            axes(Fig.axh{cell, Fig.Current}(AxIndx));                             
-            if PlotRasters == 1
-                line = 0;
-                for t = 1:size(AllSpikes,3)                                                                 % For each repetition/ trial...
-                    line = line+1;
-                    for sp = 1:numel(AllSpikes{cell, s, t})                                                 % For each spike...
-                        ph(t,sp) = plot(repmat(AllSpikes{cell, s, t}(sp), [1,2]), [line-1, line], '-k');  	% Draw a vertical line
-                        hold on;
-                    end
-                end
-                axis tight off
-                mkh(s)  = plot([0 0], ylim, '-b', 'linewidth', 2);
-                AxesPos = get(Fig.axh{cell, Fig.Current}(AxIndx+AxW), 'position');
-                set(Fig.axh{cell, Fig.Current}(AxIndx), 'position', [AxesPos(1), sum(AxesPos([2,4])), AxesPos(3), AxesPos(4)/2], 'xlim', Xlims);
-                title(sprintf('Stim %d', s), 'fontsize', 12);
-            end
-
-            %============= Plot PSTH / SDF
-            Fig.SDFAx{cell}(s) = Fig.axh{cell}(AxIndx+AxW);
-            axes(Fig.axh{cell, Fig.Current}(AxIndx+AxW));
-            for t = 1:size(AllSpikes, 3)
-                BinData{cell, s}(t,:) = (hist(AllSpikes{cell, s, t}, HistBins))*(1000/BinWidth);
-            end
-            BinMeans{cell, s}	= mean(BinData{cell, s});
-            BinSEM{cell, s}     = std(BinData{cell, s})/sqrt(size(BinData{cell, s},1));
-    %             BinData{cell, s}  = (hist(SpikeTimes{cell, s}(:), HistBins))/BinWidth/size(SpikeTimes{cell, s},1);
-            if SDFline == 1
-                [ha, hb, hc] = shadedplot(HistBins, BinMeans{cell, s}-BinSEM{cell, s}, BinMeans{cell, s}+BinSEM{cell, s}, PlotColors(2,:));
-                hold on;
-                delete([hb, hc]);
-                plot(HistBins, BinMeans{cell, s}, '-b', 'color', PlotColors(1,:), 'linewidth', 2);
+        %========== Loop through all stimulus repetitions
+        for t = 1:numel(Stim.Onsets{s})
+            WinStart        = (Stim.Onsets{s}(t)-Params.PreTime)*10^3;
+            WinEnd          = (Stim.Onsets{s}(t)+Params.PostTime)*10^3;
+            SpikeIndx       = find(NeuroStruct.cells{cell,3}>WinStart & NeuroStruct.cells{cell,3}<WinEnd);
+            if ~isempty(SpikeIndx)
+                AllSpikes{cell,s,t}	= NeuroStruct.cells{cell,3}(SpikeIndx)-Stim.Onsets{s}(t)*10^3;
             else
-                bar(HistBins, BinMeans{cell, s});
-                hold on;
-                errorbar(HistBins, BinMeans{cell, s}, BinSEM{cell, s, sz}, '.k');
+                AllSpikes{cell,s,t}	= NaN;
             end
-            ph = patch(StimOn([1,1,2,2]), Ylims([1,2,2,1]), Ylims([1,2,2,1]), 'facecolor', [0.5, 0.5, 0.5], 'edgecolor', 'none', 'facealpha', 0.5);
-            uistack(ph, 'bottom')
-            axis tight
-            set(gca, 'tickdir', 'out', 'xlim', Xlims, 'xtick', Xticks, 'ylim', Ylims)
-            box off
-            grid on
-
-            if mod(s,AxW) == 1
-                ylabel('Firing rate (Hz)');
-            else
-                set(gca, 'yticklabel', []);
-            end
-            if s > AxW*(AxH-1)
-               xlabel('Time (ms)'); 
-            end
-            drawnow
-            
-            %============== Save figure/ open new figure
-         	if mod(s, AxW*AxH/2) == 0 || s == numel(Stim.Onsets)
-                if s == numel(Stim.Onsets)
-                    delete(Fig.axh{cell, Fig.Current}(RasterAxIndx((s+1):end)));
-                    delete(Fig.axh{cell, Fig.Current}(SDFAxIndx((s+1):end)));
-                end
-                FigTitle = Figname;
-                FigTitle(strfind(Figname,'_')) = ' ';
-                suptitle(FigTitle);
-                %saveas(Fig.H(cell, Fig.Current), [fullfile(SaveFigDir, Figname),'.fig'],'fig');
-                export_fig([fullfile(SaveFigDir, Figname),'.png'],'-png');
-                if numel(Stim.Onsets) > s
-                    Fig.Current                 = Fig.Current+1;
-                    Fig.H(cell, Fig.Current)  	= figure('position',get(0,'ScreenSize')./[1 1 1 1], 'name',sprintf('%s cell %d', ExpNameString, cell),'renderer','painters');
-                    Fig.axh{cell, Fig.Current}	= tight_subplot(AxH, AxW, 0.02, 0.04, 0.04);
-                    Fig.axcount(cell, Fig.Current) = 1;
-                end
-            else
-                Fig.axcount(cell, Fig.Current) = Fig.axcount(cell, Fig.Current)+1;
-            end
-            
-            
         end
+
+        for t = 1:size(AllSpikes, 3)
+            BinData{cell, s}(t,:) = (hist(AllSpikes{cell, s, t}, HistBins))*(1000/BinWidth);
+        end
+
+        BinMeans{cell}(s,:)	= mean(BinData{cell,s});
+        BinSEM{cell}(s,:)   = std(BinData{cell,s})/sqrt(size(BinData{cell,s},1));
+%             BinData{cell}(s,:)  = (hist(SpikeTimes{cell, s}(:), HistBins))/BinWidth/size(SpikeTimes{cell, s},1);
     end
-    close all
+
+    %================ PLOT MEAN VISUAL RESPONSE SDF
+    AxPerFig            = cellno-(Fig.Current-1)*AxW*AxH/2;                                                  % Cell number for current plot (range: 1-NoCells per figure)
+    AxIndx              = floor((AxPerFig-1)/AxW)*AxW*2 +mod(AxPerFig-1, AxW)+1;                        %   Axis number for current plot (range: 1-AxPerFig)
+    Fig.RasterAx(cell)  = Fig.axh{Fig.Current}(AxIndx);
+    axes(Fig.axh{Fig.Current}(AxIndx));                             
+    VisRespMean{cell}   = mean(BinMeans{cell});
+    VisRespSD{cell}     = std(BinMeans{cell});
+    [ha, hb, hc] = shadedplot(HistBins, VisRespMean{cell}-VisRespSD{cell}, VisRespMean{cell}+VisRespSD{cell}, PlotColors(2,:));
+    hold on;
+    delete([hb, hc]);
+    plot(HistBins, VisRespMean{cell}, '-b', 'color', PlotColors(1,:), 'linewidth', 2);
+    ph = patch(StimOn([1,1,2,2]), Ylims([1,2,2,1]), Ylims([1,2,2,1]), 'facecolor', [0.5, 0.5, 0.5], 'edgecolor', 'none', 'facealpha', 0.5);
+    uistack(ph, 'bottom')
+    axis tight
+    set(gca, 'tickdir', 'out', 'xlim', Xlims, 'xtick', Xticks, 'xticklabel', [], 'ylim', Ylims)
+    box off
+    grid on
+    title(sprintf('Ch %d Cell %d', NeuroStruct.cells{cell,1}, NeuroStruct.cells{cell,2}));
+    if mod(cellno,AxW) == 1
+        ylabel('Firing rate (Hz)','fontsize',12);
+    else
+        set(gca, 'yticklabel', []);
+    end
+    
+    %================ PLOT MEAN RESPONSE PER STIMULUS HEAT MAP
+    Fig.SDFAx(cell)     = Fig.axh{Fig.Current}(AxIndx+AxW);
+    axes(Fig.axh{Fig.Current}(AxIndx+AxW));
+    imagesc(HistBins, 1:size(BinMeans{cell},1), BinMeans{cell});
+    hold on;
+    plot([0 0],ylim,'-w','linewidth',2);
+    colormap hot
+
+    if mod(cellno,AxW) == 1
+        ylabel('Stim #','fontsize',12);
+    else
+        set(gca, 'yticklabel', []);
+    end
+    if cellno > AxW*(AxH-1)
+       xlabel('Time (ms)','fontsize',12); 
+    else
+        set(gca, 'xticklabel', []);
+    end
+    drawnow
+
+    %============== Save figure/ open new figure?
+    if mod(cellno, AxW*AxH/2) == 0 || cellno == size(NeuroStruct.cells,1)
+        if cellno == size(NeuroStruct.cells,1)
+            delete(Fig.axh{Fig.Current}(RasterAxIndx((cellno+1):end)));
+            delete(Fig.axh{Fig.Current}(SDFAxIndx((cellno+1):end)));
+        end
+        linkaxes(Fig.axh{Fig.Current}(RasterAxIndx));
+        linkaxes(Fig.axh{Fig.Current}(SDFAxIndx));
+        set(Fig.axh{Fig.Current}(SDFAxIndx), 'clim', Ylims);
+        FigTitle = Figname;
+        FigTitle(strfind(Figname,'_')) = ' ';
+        suptitle(FigTitle);
+        %saveas(Fig.H(cell, Fig.Current), [fullfile(SaveFigDir, Figname),'.fig'],'fig');
+        export_fig([fullfile(SaveFigDir, Figname),'.png'],'-png');
+        if size(NeuroStruct.cells,1) > cellno
+            Fig.Current                 = Fig.Current+1;
+            Fig.H(Fig.Current)          = figure('position',get(0,'ScreenSize')./[1 1 1 1], 'name',sprintf('%s', ExpNameString),'renderer','painters');
+            Fig.axh{Fig.Current}        = tight_subplot(AxH, AxW, 0.02, 0.04, 0.04);
+            Fig.axcount(Fig.Current)    = 1;
+        end
+    else
+        Fig.axcount(Fig.Current) = Fig.axcount(Fig.Current)+1;
+    end
+    
+end
+
+close all
  
 
     %% ===================== PLOT RESULTS BY FACTOR =======================
@@ -306,7 +304,7 @@ for cellno = 1:size(NeuroStruct.cells,1)
         save(SortedDataFilename, '-append', 'AllSpikes','BinData','BinMeans','BinSEM','HistBins');
     end
 
-end
+% end
 delete(wbh)
 
 save(SortedDataFilename, '-append', 'ElLFPall', 'Factor', 'Params');

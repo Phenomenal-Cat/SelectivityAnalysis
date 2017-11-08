@@ -7,9 +7,9 @@ function MF3D_PlotResponses_Orientations(Subject, Date, Channel, CellIndx, Outpu
 %==========================================================================
 
 if nargin == 0
-    Subject     = 'Avalanche';
-    Date        = '20160715';
-    Channel     = 76;
+    Subject     = 'Matcha';
+    Date        = '20160613';
+    Channel     = 22;
     CellIndx   	= 1;
     Output      = 'svg';
 end

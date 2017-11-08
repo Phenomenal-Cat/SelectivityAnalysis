@@ -19,8 +19,8 @@
 
 % if nargin == 0
     ExpName     = 'StereoFaces';
-    SubjectID   = 'Dango';
-    DateString  = '20170622';
+    SubjectID   = 'Spice';
+    DateString  = '20170731';
     ExpType     = 7;
     OnlyCompletedObs = 0;           % 1 = only include trials from completes obs blocks
     Verbose     = 1;
@@ -62,22 +62,24 @@ for i = 1:numel(DGZFiles)                                                       
         DGZ(i).e_params = [];
     end
 end
-if isfield(ExpParam, 'Experiment')
-    AllBlocks       = {ExpParam.Experiment};
-    NoName          = find(cellfun(@isempty,  AllBlocks));
-end
-TrialsPerObs  	= unique([ExpParam.Trials_Per_Obs]);
-if numel(TrialsPerObs) > 1
-    fprintf('WARNING: number of trials per obs was not kept constant during this session!\n');
-    TrialsPerObs = [ExpParam.Trials_Per_Obs];
-elseif isempty(TrialsPerObs)
-    if strcmp(ExpName, 'FingerPrint')
-        TrialsPerObs = 12;
-    elseif strcmp(ExpName, 'StereoFaces')
-        TrialsPerObs = 5;
+if exist('ExpParam','var')
+    if isfield(ExpParam, 'Experiment')
+        AllBlocks       = {ExpParam.Experiment};
+        NoName          = find(cellfun(@isempty,  AllBlocks));
+    end
+
+    TrialsPerObs  	= unique([ExpParam.Trials_Per_Obs]);
+    if numel(TrialsPerObs) > 1
+        fprintf('WARNING: number of trials per obs was not kept constant during this session!\n');
+        TrialsPerObs = [ExpParam.Trials_Per_Obs];
+    elseif isempty(TrialsPerObs)
+        if strcmp(ExpName, 'FingerPrint')
+            TrialsPerObs = 12;
+        elseif strcmp(ExpName, 'StereoFaces')
+            TrialsPerObs = 5;
+        end
     end
 end
-
 
 %======================== Load all data
 PD.Signal   = [];
@@ -141,7 +143,7 @@ else
 end
 
 %===================== ANALYSE PHOTODIODE SIGNAL ==========================
-PD = CheckPhotodiode(PD.Signal, anlgSampleRate, [], BlockEndTime*10);         	% Extract photodiode state changes from signal
+PD = CheckPhotodiode(PD.Signal, anlgSampleRate, [], BlockEndTime*10);      	% Extract photodiode state changes from signal
 for p = 1:numel(PD.OnTimes)                                              	% For each photodiode onset...
     QNXindx         = find(AllQNXtimes < PD.OnTimes(p));                  	% Find the preceding code that was received from QNX
     PD.QNXcodes(p)  = AllQNXcodes(QNXindx(end));            
@@ -156,7 +158,7 @@ if OnlyCompletedObs == 1
         StimOnCompBlock	= sort([StimOnCompBlock, CompletedObsBegin+t]);             
     end
 elseif OnlyCompletedObs == 0
-    StimOnCompBlock = find(PD.QNXcodes>0 & PD.QNXcodes<=numel(Params.Filenames));
+    StimOnCompBlock = find(PD.QNXcodes>0 & PD.QNXcodes<=numel(Params.ImgFilenames));
 end
 StimOnTimes         = PD.OnTimes(StimOnCompBlock);                         	% Find the photodiode onset times for all valid stimulus presentations
 StimOnIDs           = PD.QNXcodes(StimOnCompBlock);                       	% Find the stimulus ID number for each valid stimulus presentations
@@ -171,24 +173,24 @@ end
 
 
 %============= Get all stimulus ID numbers from DGZ
-for block = 1:numel(DGZ)
-    if ~isempty(DGZ(block).e_params)
-        for obs = 1:numel(DGZ(block).e_params)
-            AllChars = DGZ(block).e_params{obs}(find(cellfun(@ischar, DGZ(block).e_params{obs})));
-            AllChars = AllChars(~cellfun(@isempty, strfind(AllChars, 'pic#')));
-            for t = 1:numel(AllChars)
-                WhtSpcIndx = strfind(AllChars{t},' ');
-                QNX.ImageIDs{block}(obs,t) = str2num(AllChars{t}(WhtSpcIndx(2)+1:WhtSpcIndx(3)-1));
-            end
-        end
-        QNX.ValidTrials{block} = find(QNX.ImageIDs{block}~=0);
-    end
-end
-
-BlockStartIndx          = find(QNXcodes == QNX.codes.Begin);
-BlockStartTimes         = QNXtimes(BlockStartIndx);
-
-save(OutputFile, 'Stim', 'ExpParam', 'QNX', 'PD', 'Params');
+% for block = 1:numel(DGZ)
+%     if ~isempty(DGZ(block).e_params)
+%         for obs = 1:numel(DGZ(block).e_params)
+%             AllChars = DGZ(block).e_params{obs}(find(cellfun(@ischar, DGZ(block).e_params{obs})));
+%             AllChars = AllChars(~cellfun(@isempty, strfind(AllChars, 'pic#')));
+%             for t = 1:numel(AllChars)
+%                 WhtSpcIndx = strfind(AllChars{t},' ');
+%                 QNX.ImageIDs{block}(obs,t) = str2num(AllChars{t}(WhtSpcIndx(2)+1:WhtSpcIndx(3)-1));
+%             end
+%         end
+%         QNX.ValidTrials{block} = find(QNX.ImageIDs{block}~=0);
+%     end
+% end
+% 
+% BlockStartIndx          = find(QNXcodes == QNX.codes.Begin);
+% BlockStartTimes         = QNXtimes(BlockStartIndx);
+% 
+ save(OutputFile, 'Stim', 'QNX', 'PD', 'Params');
 
 
 %======================== PLOT SOME DATA

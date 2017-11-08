@@ -84,8 +84,8 @@ for exp = 1:numel(Params.Expressions)
             if ExpType == 7
                 for gaz = 1:numel(Params.Azimuths)
                     for gel = 1:numel(Params.Elevations)
-                        Pic.ImgFilenames{Indx} = fullfile(FaceImageDir, sprintf('MacaqueGaze_Neutral_Haz%d_Hel%d_Gaz%d_Gel%d_dist0.png', Params.Azimuths(az), Params.Elevations(el), Params.Azimuths(gaz), Params.Elevations(gel)));
-                      	Pic.ConditionMatrix(Indx,:) = [az, el, gaz, gel];
+                        Params.ImgFilenames{Indx} = fullfile(FaceImageDir, sprintf('MacaqueGaze_Neutral_Haz%d_Hel%d_Gaz%d_Gel%d_dist0.png', Params.Azimuths(az), Params.Elevations(el), Params.Azimuths(gaz), Params.Elevations(gel)));
+                      	Params.ConditionMatrix(Indx,:) = [az, el, gaz, gel];
                         Indx = Indx+1;
                     end
                 end
