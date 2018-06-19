@@ -3,7 +3,7 @@
 
 For social animals like primates, faces are a behaviourally important class of visual objects, and they exhibit statistical variation across multiple dimensions. Previous studies have typically investigated the selectivity of single neurons in the inferotemporal (IT) cortex of macaques to variation of one or two facial features at a time, such as identity and head orientation. However, due to the high-dimensionality of the stimulus space and the time-constraints imposed by traditional recording methods, our understanding of how multiple facial features are encoded remains limited. 
 
-<dl><img src="https://user-images.githubusercontent.com/7523776/41604948-608d24a0-73ae-11e8-80d9-72db5f19a0d5.png" width=400 height=300> 
+<dl><img src="https://user-images.githubusercontent.com/7523776/41604948-608d24a0-73ae-11e8-80d9-72db5f19a0d5.png" height=300> 
 </br><b>Figure 1.</b> Chronic microwire elctrode location and 'brush' tip illustration (MR image courtesy of McMahon et al., 2014). 
 </dl>
 
