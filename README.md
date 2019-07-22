@@ -19,7 +19,7 @@ Second, to leverage this new ability we have developed an anatomically realistic
 </br><b>Figure 3.</b> Head orientation tuning in an example AM neuron. This animation shows how the spike rate of a single neuron evolves over time (show in milliseconds) from when the visual stimulus appeared on the screen in front of the subject. This cell shows tuning to head orientation.
 </dl>
 
-Preliminary data collected using these methods have been reported in a scientific poster presentation, here: 
+Data collected using these methods have been reported here: 
 
 <b>Murphy AP & Leopold DA (2019).</b> [A parameterized digital 3D model of the Rhesus macaque face for investigating the visual processing of social cues. J.Neurosci.Methods. 324, 108309](https://doi.org/10.1016/j.jneumeth.2019.06.001). 
 
