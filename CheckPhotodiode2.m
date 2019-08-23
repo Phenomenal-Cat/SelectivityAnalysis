@@ -29,10 +29,12 @@ PD.Inverted     = 0;
 PD.PlotOn       = 1;
 
 %============== High-pass filter signal
-if PD.FilterOn == 1
-    PD.Filt.Cutoff    	= 0.001;                                            
+PD.Filt.Cutoff    	= 0.001; 
+if PD.FilterOn == 1                           
     [b,a]               = butter(2, PD.Filt.Cutoff/PD.SampleRate*2,'high');
     PD.SignalFilt       = filtfilt(b,a,PD.Signal);
+else
+    PD.SignalFilt       = PD.Signal;
 end
 
 %============== Threshold signal
@@ -206,8 +208,12 @@ function UpdateFilt
 global Fig PD
 
 %========== Filter signal
-[b,a]               = butter(2, PD.Filt.Cutoff/PD.SampleRate*2,'high');
-PD.SignalFilt       = filtfilt(b,a,PD.Signal);
+if PD.FilterOn == 1 
+    [b,a]               = butter(2, PD.Filt.Cutoff/PD.SampleRate*2,'high');
+    PD.SignalFilt       = filtfilt(b,a,PD.Signal);
+else
+    PD.SignalFilt       = PD.Signal;
+end
 set(Fig.TCfilt, 'ydata', PD.SignalFilt);
 
 %========== Use filtered signal?
