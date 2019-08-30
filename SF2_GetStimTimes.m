@@ -1,4 +1,4 @@
-function Stim = SF2_GetStimTimes(TDTdata, StimTimes, Save)
+function Stim = SF2_GetStimTimes(TDTdata, NoStim)
 
 %========================= MF3D2_GetSTimTimes.m ===========================
 % This function retreives the timing and stimulus identity information for
@@ -65,8 +65,8 @@ for n = 1:numel(OffsetIndx)
 end
 
 %================= Find stimulus onset time and ID# for each presentation
-StimIndices         = unique(EventCodes(EventCodes<2000 & EventCodes >0));
-NoStim              = numel(StimIndices);
+% StimIndices         = unique(EventCodes(EventCodes<2000 & EventCodes >0));
+% NoStim              = numel(StimIndices);
 StimOnVal           = Events(find(~cellfun(@isempty, strfind({Events.String}, 'Stim_On')))).TDTnumber;
 StimOffVal          = Events(find(~cellfun(@isempty, strfind({Events.String}, 'Stim_Off')))).TDTnumber;
 StimOnIndx          = find(EventCodes==StimOnVal);
@@ -75,20 +75,29 @@ StimOnTime          = EventTimes(StimOnIndx);
 if ~exist('Stim','var') || isempty(Stim)
     Stim.Count  	= zeros(1,NoStim);
 end
+if StimOnIndx(end) == numel(EventCodes)
+    StimOnIndx(end) = [];
+end
 
+Stim.Times = cell(1,NoStim);
 for s = 1:numel(StimOnIndx)                                     % For each 'StimOn' event code...
-    StimOffIndx(s)  = StimOnIndx(s) + find(EventCodes((StimOnIndx(s)+1):end)==StimOffVal, 1, 'first');
-    StimOffTime(s)  = EventTimes(StimOffIndx(s));
-    
-    Dist(s)     = find(EventCodes((StimOnIndx(s)+1):end)>0 & EventCodes((StimOnIndx(s)+1):end)<=NoStim, 1, 'first');
-    StimID(s)   = EventCodes(StimOnIndx(s) + Dist(s));
-    PDonIndx(s) = find(PD.OnTimes > StimOnTime(s),1,'first');
-    PDoffIndx(s)= find(PD.OffTimes > StimOffTime(s),1,'first');
-    PDdur(s)    = PD.OffTimes(PDoffIndx(s))-PD.OnTimes(PDonIndx(s));
-    TimeDiff(s) = PD.OnTimes(PDonIndx(s))-StimOnTime(s);
-    if PDdur(s) > 0.2
-        Stim.Count(StimID(s))                           = Stim.Count(StimID(s))+1;
-        Stim.Times{StimID(s)}(Stim.Count(StimID(s)))    = PD.OnTimes(PDonIndx(s));
+    StimOffTemp  = StimOnIndx(s) + find(EventCodes((StimOnIndx(s)+1):end)==StimOffVal, 1, 'first');
+    if ~isempty(StimOffTemp)
+        StimOffIndx(s)  = StimOffTemp;
+        StimOffTime(s)  = EventTimes(StimOffIndx(s));
+        DistTemp       	= find(EventCodes((StimOnIndx(s)+1):end)>0 & EventCodes((StimOnIndx(s)+1):end)<=NoStim, 1, 'first');
+        if ~isempty(DistTemp)
+            Dist(s)     = DistTemp;
+            StimID(s)   = EventCodes(StimOnIndx(s) + Dist(s));
+            PDonIndx(s) = find(PD.OnTimes > StimOnTime(s),1,'first');
+            PDoffIndx(s)= find(PD.OffTimes > StimOffTime(s),1,'first');
+            PDdur(s)    = PD.OffTimes(PDoffIndx(s))-PD.OnTimes(PDonIndx(s));
+            TimeDiff(s) = PD.OnTimes(PDonIndx(s))-StimOnTime(s);
+            if PDdur(s) > 0.2
+                Stim.Count(StimID(s))                           = Stim.Count(StimID(s))+1;
+                Stim.Times{StimID(s)}(Stim.Count(StimID(s)))    = PD.OnTimes(PDonIndx(s));
+            end
+        end
     end
 end
 %StimOnIndx(Dist > 2)    = [];          % Remove 'stim on' if stim ID# was not found
